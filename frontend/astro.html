@@ -24,7 +24,7 @@
 
             --fire: #d4603a;
             --earth: #5a9a40;
-            --air: #5888c8;
+            --air: #d4c44a;
             --water: #4058a8;
 
             --sun: #f0c040;
@@ -492,29 +492,14 @@
     <script type="module">
         import {
             RAD, DAY_MS, ZODIAC, DAY_NAMES, CHALDEAN, DAY_RULER_IDX, AMARETH_EPOCH,
+            ELEMENT_LABELS, MODALITY_LABELS,
             getSunTimes, julianDay, jdToDate, sunLongitude, findSunCrossing,
             getIngresses, truncToDate, effectiveMonthStart,
             getMonthStartDates, getMonthDays, gregorianToZodiac,
             getPlanetaryHours, toAmareth, fromAmareth, fmtAmarethYear, fmtTime,
         } from './engine.js';
 
-        // ===== SIGN METADATA =====
-        const SIGN_META = [
-            { element: "Ogien",    modality: "Kardynalny", elClass: "fire",  elColor: "#d4603a" },
-            { element: "Ziemia",   modality: "Staly",      elClass: "earth", elColor: "#5a9a40" },
-            { element: "Powietrze",modality: "Zmienny",    elClass: "air",   elColor: "#5888c8" },
-            { element: "Woda",     modality: "Kardynalny", elClass: "water", elColor: "#4058a8" },
-            { element: "Ogien",    modality: "Staly",      elClass: "fire",  elColor: "#d4603a" },
-            { element: "Ziemia",   modality: "Zmienny",    elClass: "earth", elColor: "#5a9a40" },
-            { element: "Powietrze",modality: "Kardynalny", elClass: "air",   elColor: "#5888c8" },
-            { element: "Woda",     modality: "Staly",      elClass: "water", elColor: "#4058a8" },
-            { element: "Ogien",    modality: "Zmienny",    elClass: "fire",  elColor: "#d4603a" },
-            { element: "Ziemia",   modality: "Kardynalny", elClass: "earth", elColor: "#5a9a40" },
-            { element: "Powietrze",modality: "Staly",      elClass: "air",   elColor: "#5888c8" },
-            { element: "Woda",     modality: "Zmienny",    elClass: "water", elColor: "#4058a8" },
-        ];
-
-        const ELEMENT_COLORS = { fire: "#d4603a", earth: "#5a9a40", air: "#5888c8", water: "#4058a8" };
+        // SIGN_META is now part of ZODIAC in engine.js (element, modality, elColor)
 
         // ===== STATE =====
         let currentYear;
@@ -580,7 +565,7 @@
                 const a1 = i * 30 + 0.4;
                 const a2 = (i + 1) * 30 - 0.4;
                 const isCurrent = i === currentSignIdx;
-                const meta = SIGN_META[i];
+                const meta = ZODIAC[i];
 
                 let fill, fOpacity;
                 if (isCurrent) {
@@ -599,7 +584,7 @@
                 s += `<text x="${tx}" y="${ty}" fill="${tColor}" font-size="${tSize}" text-anchor="middle" dominant-baseline="central" font-weight="${isCurrent ? 'bold' : 'normal'}"${isCurrent ? ' filter="url(#softGlow)"' : ''}>${ZODIAC[i].symbol}</text>`;
 
                 // Tooltip
-                s += `<circle cx="${tx}" cy="${ty}" r="13" fill="transparent"><title>${ZODIAC[i].name} (${ZODIAC[i].latin}) — ${meta.element}, ${meta.modality}</title></circle>`;
+                s += `<circle cx="${tx}" cy="${ty}" r="13" fill="transparent"><title>${ZODIAC[i].name} (${ZODIAC[i].latin}) — ${ELEMENT_LABELS[meta.element]}, ${MODALITY_LABELS[meta.modality]}</title></circle>`;
             }
 
             // ===== MIDDLE RING: 24 Planetary Hours =====
@@ -734,7 +719,7 @@
 
         function renderToday() {
             const zd = gregorianToZodiac(todayUTC, userLat, userLng);
-            const meta = SIGN_META[zd.month - 1];
+            const meta = ZODIAC[zd.month - 1];
             let sunInfo = '';
             let currentHourHTML = '';
 
@@ -765,8 +750,8 @@
                 <div class="zodiac-date">${zd.day} ${zd.sign.name}, ${fmtAmarethYear(zd.year)}</div>
                 <div class="gregorian-date">${todayUTC.toISOString().slice(0, 10)}</div>
                 <div class="sign-badges">
-                    <span class="badge badge-${meta.elClass}">${meta.element}</span>
-                    <span class="badge badge-${meta.elClass}">${meta.modality}</span>
+                    <span class="badge badge-${meta.element}">${ELEMENT_LABELS[meta.element]}</span>
+                    <span class="badge badge-${meta.element}">${MODALITY_LABELS[meta.modality]}</span>
                 </div>
                 <div class="sun-position">\u2609 Slonce: ${sunLon.toFixed(1)}\u00b0 w ${zd.sign.name}</div>
                 ${sunInfo}
@@ -850,7 +835,7 @@
                 const isCurrent = todayZodiac.year === year && todayZodiac.month === i + 1;
                 const startDate = new Date(starts[i]);
                 const startDow = (startDate.getUTCDay() + 6) % 7;
-                const meta = SIGN_META[i];
+                const meta = ZODIAC[i];
 
                 let daysHTML = DAY_NAMES.map(d => `<div class="day-label">${d}</div>`).join('');
                 for (let e = 0; e < startDow; e++) daysHTML += '<div class="day-cell empty"></div>';
@@ -859,7 +844,7 @@
                     daysHTML += `<div class="day-cell${isToday ? ' today' : ''}">${d}</div>`;
                 }
                 const dateStr = `${startDate.getUTCDate()} ${startDate.toLocaleString('pl', {month:'short', timeZone:'UTC'})} ${startDate.getUTCFullYear()}`;
-                return `<div class="month-card ${meta.elClass}${isCurrent ? ' current' : ''}">
+                return `<div class="month-card ${meta.element}${isCurrent ? ' current' : ''}">
                     <div class="month-header">
                         <span class="symbol">${ing.symbol}</span>
                         <span class="name">${ing.name}</span>

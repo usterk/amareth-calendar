@@ -123,19 +123,22 @@ export function findSunCrossing(targetLon, startJD) {
 }
 
 export const ZODIAC = [
-    { name: "Arieneum",    symbol: "\u2648", latin: "Aries",       lon: 0 },
-    { name: "Taureneum",   symbol: "\u2649", latin: "Taurus",      lon: 30 },
-    { name: "Geminion",    symbol: "\u264a", latin: "Gemini",      lon: 60 },
-    { name: "Cancerion",   symbol: "\u264b", latin: "Cancer",      lon: 90 },
-    { name: "Leon",        symbol: "\u264c", latin: "Leo",         lon: 120 },
-    { name: "Virgeon",     symbol: "\u264d", latin: "Virgo",       lon: 150 },
-    { name: "Libreon",     symbol: "\u264e", latin: "Libra",       lon: 180 },
-    { name: "Scorpion",    symbol: "\u264f", latin: "Scorpio",     lon: 210 },
-    { name: "Sagittarion", symbol: "\u2650", latin: "Sagittarius", lon: 240 },
-    { name: "Caprineum",   symbol: "\u2651", latin: "Capricorn",   lon: 270 },
-    { name: "Aquarion",    symbol: "\u2652", latin: "Aquarius",    lon: 300 },
-    { name: "Piscion",     symbol: "\u2653", latin: "Pisces",      lon: 330 },
+    { name: "Arieneum",    symbol: "\u2648", latin: "Aries",       lon: 0,   element: "fire",  modality: "cardinal", elColor: "#d4603a" },
+    { name: "Taureneum",   symbol: "\u2649", latin: "Taurus",      lon: 30,  element: "earth", modality: "fixed",    elColor: "#5a9a40" },
+    { name: "Geminion",    symbol: "\u264a", latin: "Gemini",      lon: 60,  element: "air",   modality: "mutable",  elColor: "#d4c44a" },
+    { name: "Cancerion",   symbol: "\u264b", latin: "Cancer",      lon: 90,  element: "water", modality: "cardinal", elColor: "#4058a8" },
+    { name: "Leon",        symbol: "\u264c", latin: "Leo",         lon: 120, element: "fire",  modality: "fixed",    elColor: "#d4603a" },
+    { name: "Virgeon",     symbol: "\u264d", latin: "Virgo",       lon: 150, element: "earth", modality: "mutable",  elColor: "#5a9a40" },
+    { name: "Libreon",     symbol: "\u264e", latin: "Libra",       lon: 180, element: "air",   modality: "cardinal", elColor: "#d4c44a" },
+    { name: "Scorpion",    symbol: "\u264f", latin: "Scorpio",     lon: 210, element: "water", modality: "fixed",    elColor: "#4058a8" },
+    { name: "Sagittarion", symbol: "\u2650", latin: "Sagittarius", lon: 240, element: "fire",  modality: "mutable",  elColor: "#d4603a" },
+    { name: "Caprineum",   symbol: "\u2651", latin: "Capricorn",   lon: 270, element: "earth", modality: "cardinal", elColor: "#5a9a40" },
+    { name: "Aquarion",    symbol: "\u2652", latin: "Aquarius",    lon: 300, element: "air",   modality: "fixed",    elColor: "#d4c44a" },
+    { name: "Piscion",     symbol: "\u2653", latin: "Pisces",      lon: 330, element: "water", modality: "mutable",  elColor: "#4058a8" },
 ];
+
+export const ELEMENT_LABELS = { fire: "Ogien", earth: "Ziemia", air: "Powietrze", water: "Woda" };
+export const MODALITY_LABELS = { cardinal: "Kardynalny", fixed: "Staly", mutable: "Zmienny" };
 
 export const DAY_NAMES = ["Pn", "Wt", "Sr", "Cz", "Pt", "So", "Nd"];
 
