@@ -553,6 +553,7 @@
         <nav class="theme-nav">
             <a href="index.html" class="theme-link" id="classic-link">Klasyczny</a>
             <span class="theme-active">✦ Astro</span>
+            <a href="solar.html" class="theme-link" id="solar-link">☀ Solar</a>
             <button class="config-toggle" onclick="toggleConfig()">⚙ Lokalizacja</button>
         </nav>
     </div>
@@ -1197,6 +1198,8 @@
         function updateThemeLinks() {
             const link = document.getElementById('classic-link');
             if (link && userLat !== null) link.href = `index.html?lat=${userLat}&lng=${userLng}`;
+            const solarLink = document.getElementById('solar-link');
+            if (solarLink && userLat !== null) solarLink.href = `solar.html?lat=${userLat}&lng=${userLng}`;
         }
 
         function setLocation(lat, lng, label) {

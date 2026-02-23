@@ -218,6 +218,7 @@
         <nav class="theme-nav">
             <span class="theme-active">Klasyczny</span>
             <a href="astro.html" class="theme-link" id="astro-link">✦ Astro</a>
+            <a href="solar.html" class="theme-link" id="solar-link">☀ Solar</a>
         </nav>
     </div>
 
@@ -679,6 +680,8 @@
         function updateThemeLinks() {
             const link = document.getElementById('astro-link');
             if (link && userLat !== null) link.href = `astro.html?lat=${userLat}&lng=${userLng}`;
+            const solarLink = document.getElementById('solar-link');
+            if (solarLink && userLat !== null) solarLink.href = `solar.html?lat=${userLat}&lng=${userLng}`;
         }
 
         document.getElementById('loc-status').textContent = `Torun (${userLat.toFixed(2)}, ${userLng.toFixed(2)})`;
