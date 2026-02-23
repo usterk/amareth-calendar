@@ -292,7 +292,16 @@
             background: var(--surface); border: 1px solid var(--border);
             border-radius: 12px; padding: 1rem; transition: border-color 0.3s;
             border-left: 3px solid var(--border);
+            position: relative; overflow: hidden;
         }
+        .month-card::after {
+            content: ''; position: absolute;
+            right: -10px; bottom: -15px;
+            font-size: 7rem; line-height: 1;
+            opacity: 0.09; filter: blur(2px);
+            pointer-events: none; z-index: 0;
+        }
+        .month-card > * { position: relative; z-index: 1; }
         .month-card:hover { border-color: var(--border-glow); }
         .month-card.current {
             border-color: var(--accent);
@@ -305,9 +314,13 @@
             100% { box-shadow: 0 0 25px var(--accent-glow), inset 0 0 25px #c8a84e22; }
         }
         .month-card.fire { border-left-color: var(--fire); }
+        .month-card.fire::after { content: '\1F525'; }
         .month-card.earth { border-left-color: var(--earth); }
+        .month-card.earth::after { content: '\1F33F'; }
         .month-card.air { border-left-color: var(--air); }
+        .month-card.air::after { content: '\1F4A8'; }
         .month-card.water { border-left-color: var(--water); }
+        .month-card.water::after { content: '\1F4A7'; }
         .month-header {
             display: flex; align-items: center; gap: 0.5rem;
             margin-bottom: 0.75rem; padding-bottom: 0.5rem;
