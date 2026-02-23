@@ -283,6 +283,26 @@ export function fmtAmarethYear(zodiacYear) {
     return `Rok ${Math.abs(a)} p.A.`;
 }
 
+// ========== MOON PHASE ==========
+// Returns { phase (0-1), illumination (0-100), name (Polish) }
+export function getMoonPhase(jd) {
+    const newMoonRef = 2451549.26; // 2000-01-06 18:14 UTC
+    const synodic = 29.53059;
+    let phase = ((jd - newMoonRef) / synodic) % 1;
+    if (phase < 0) phase += 1;
+    const illumination = Math.round((1 - Math.cos(phase * 2 * Math.PI)) / 2 * 100);
+    let name;
+    if (phase < 0.03 || phase > 0.97)   name = 'N\u00f3w';
+    else if (phase < 0.22)              name = 'Przybywaj\u0105cy Sierp';
+    else if (phase < 0.28)              name = 'Pierwsza Kwadra';
+    else if (phase < 0.47)              name = 'Przybywaj\u0105cy Garb';
+    else if (phase < 0.53)              name = 'Pe\u0142nia';
+    else if (phase < 0.72)              name = 'Ubywaj\u0105cy Garb';
+    else if (phase < 0.78)              name = 'Ostatnia Kwadra';
+    else                                name = 'Ubywaj\u0105cy Sierp';
+    return { phase, illumination, name };
+}
+
 // ========== UTILITY ==========
 export function fmtTime(d) {
     return d.toLocaleTimeString('pl', { hour: '2-digit', minute: '2-digit' });
