@@ -445,7 +445,7 @@
             { name: "Piscion",     symbol: "\u2653", latin: "Pisces",      lon: 330 },
         ];
 
-        const DAY_NAMES = ["Nd", "Pn", "Wt", "Sr", "Cz", "Pt", "So"];
+        const DAY_NAMES = ["Pn", "Wt", "Sr", "Cz", "Pt", "So", "Nd"];
 
         // ========== PLANETARY HOURS ==========
         const CHALDEAN = [
@@ -838,7 +838,7 @@
                 totalDays += days;
                 const isCurrent = todayZodiac.year === year && todayZodiac.month === i + 1;
                 const startDate = new Date(starts[i]);
-                const startDow = startDate.getUTCDay();
+                const startDow = (startDate.getUTCDay() + 6) % 7; // Mon=0, Tue=1, ..., Sun=6
                 let daysHTML = DAY_NAMES.map(d => `<div class="day-label">${d}</div>`).join('');
                 for (let e = 0; e < startDow; e++) daysHTML += '<div class="day-cell empty"></div>';
                 for (let d = 1; d <= days; d++) {
