@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amaréth Calendar</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #f0883e;
+            --accent-dim: #f0883e33;
+            --today-bg: #f0883e22;
+            --today-border: #f0883e;
+            --warning: #f85149;
+            --warning-bg: #f8514922;
+            --sun: #f0c040;
+            --moon: #c0c8d8;
+            --mars: #d44040;
+            --mercury: #a080d0;
+            --jupiter: #4080d0;
+            --venus: #40b880;
+            --saturn: #808080;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+        .header { text-align: center; margin-bottom: 1.5rem; }
+        .header h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .header .subtitle { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* Location bar */
+        .location-bar {
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .location-bar .loc-row {
+            display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+        }
+        .location-bar button {
+            background: var(--accent);
+            border: none;
+            color: var(--bg);
+            padding: 0.45rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .location-bar button:hover { opacity: 0.9; }
+        .location-bar button.secondary {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .location-bar input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.45rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 90px;
+        }
+        .location-bar select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.45rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            flex: 1;
+            min-width: 160px;
+        }
+        .location-bar select optgroup { color: var(--accent); }
+        .location-bar select option { color: var(--text); background: var(--bg); }
+        .location-bar .loc-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .location-bar .loc-status {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Polar warning */
+        .polar-warning {
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            background: var(--warning-bg);
+            border: 1px solid var(--warning);
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .polar-warning .pw-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .polar-warning .pw-title { font-weight: 600; margin-bottom: 0.25rem; }
+        .polar-warning .pw-detail { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* Today display */
+        .today-display {
+            background: var(--surface);
+            border: 1px solid var(--today-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+        }
+        .today-display .zodiac-date { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .today-display .gregorian-date { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+        .today-display .sign-symbol { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+        .today-display .sun-times {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Planetary hours */
+        .planetary-section {
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .planetary-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+        .clock-container {
+            display: flex;
+            justify-content: center;
+            padding: 0.5rem 0;
+        }
+
+        /* Year nav */
+        .year-nav { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem; }
+        .year-nav button {
+            background: var(--surface); border: 1px solid var(--border); color: var(--text);
+            padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 1rem;
+        }
+        .year-nav button:hover { border-color: var(--accent); }
+        .year-nav .year-label { font-size: 1.3rem; font-weight: 600; min-width: 120px; text-align: center; }
+        .year-summary { text-align: center; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+        /* Month cards */
+        .months-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem; max-width: 1200px; margin: 0 auto;
+        }
+        .month-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 1rem; transition: border-color 0.2s;
+        }
+        .month-card:hover { border-color: var(--accent); }
+        .month-card.current { border-color: var(--today-border); background: var(--today-bg); }
+        .month-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+        }
+        .month-header .symbol { font-size: 1.5rem; }
+        .month-header .name { font-weight: 600; font-size: 1.1rem; flex: 1; }
+        .month-header .days-badge {
+            background: var(--accent-dim); color: var(--accent);
+            padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600;
+        }
+        .month-info { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.5rem; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .day-label { text-align: center; font-size: 0.65rem; color: var(--text-muted); padding: 2px 0; font-weight: 600; }
+        .day-cell { text-align: center; padding: 3px 0; font-size: 0.8rem; border-radius: 4px; color: var(--text-muted); }
+        .day-cell.today { background: var(--accent); color: var(--bg); font-weight: 700; }
+        .day-cell.empty { visibility: hidden; }
+
+        /* Converter */
+        .converter {
+            max-width: 500px; margin: 2rem auto 0; background: var(--surface);
+            border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;
+        }
+        .converter h3 { margin-bottom: 1rem; font-size: 1rem; }
+        .converter input {
+            background: var(--bg); border: 1px solid var(--border); color: var(--text);
+            padding: 0.5rem; border-radius: 6px; font-size: 1rem; width: 100%;
+        }
+        .converter .result { margin-top: 0.75rem; padding: 0.75rem; background: var(--bg); border-radius: 6px; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Amaréth Calendar</h1>
+        <div class="subtitle">Horae Temporales</div>
+    </div>
+
+    <div class="location-bar" id="location-bar">
+        <div class="loc-row">
+            <button onclick="requestGeolocation()">Moja lokalizacja</button>
+            <span class="loc-label">lub:</span>
+            <select id="city-select" onchange="selectCity(this.value)">
+                <option value="">-- Wybierz miasto --</option>
+                <optgroup label="Polska">
+                    <option value="52.23,21.01">Warszawa</option>
+                    <option value="50.06,19.94">Krakow</option>
+                    <option value="51.11,17.04">Wroclaw</option>
+                    <option value="54.35,18.65">Gdansk</option>
+                    <option value="53.01,18.60">Torun</option>
+                </optgroup>
+                <optgroup label="Europa">
+                    <option value="51.51,-0.13">Londyn</option>
+                    <option value="48.86,2.35">Paryz</option>
+                    <option value="52.52,13.41">Berlin</option>
+                    <option value="41.90,12.50">Rzym</option>
+                    <option value="40.42,-3.70">Madryt</option>
+                    <option value="59.33,18.07">Sztokholm</option>
+                    <option value="55.68,12.57">Kopenhaga</option>
+                    <option value="60.17,24.94">Helsinki</option>
+                    <option value="38.72,-9.14">Lizbona</option>
+                    <option value="37.98,23.73">Ateny</option>
+                    <option value="50.45,30.52">Kijow</option>
+                    <option value="55.76,37.62">Moskwa</option>
+                    <option value="41.01,28.98">Stambuł</option>
+                </optgroup>
+                <optgroup label="Ameryka Pn.">
+                    <option value="40.71,-74.01">Nowy Jork</option>
+                    <option value="34.05,-118.24">Los Angeles</option>
+                    <option value="41.88,-87.63">Chicago</option>
+                    <option value="43.65,-79.38">Toronto</option>
+                    <option value="19.43,-99.13">Meksyk</option>
+                </optgroup>
+                <optgroup label="Ameryka Pd.">
+                    <option value="-23.55,-46.63">Sao Paulo</option>
+                    <option value="-34.60,-58.38">Buenos Aires</option>
+                    <option value="-12.05,-77.04">Lima</option>
+                    <option value="4.71,-74.07">Bogota</option>
+                </optgroup>
+                <optgroup label="Azja">
+                    <option value="35.68,139.69">Tokio</option>
+                    <option value="37.57,126.98">Seul</option>
+                    <option value="39.90,116.40">Pekin</option>
+                    <option value="31.23,121.47">Szanghaj</option>
+                    <option value="22.32,114.17">Hongkong</option>
+                    <option value="1.35,103.82">Singapur</option>
+                    <option value="13.76,100.50">Bangkok</option>
+                    <option value="28.61,77.21">Delhi</option>
+                    <option value="19.08,72.88">Mumbaj</option>
+                    <option value="25.20,55.27">Dubaj</option>
+                    <option value="31.77,35.23">Jerozolima</option>
+                </optgroup>
+                <optgroup label="Afryka">
+                    <option value="30.04,31.24">Kair</option>
+                    <option value="-33.93,18.42">Kapsztad</option>
+                    <option value="-1.29,36.82">Nairobi</option>
+                    <option value="6.52,3.38">Lagos</option>
+                </optgroup>
+                <optgroup label="Oceania">
+                    <option value="-33.87,151.21">Sydney</option>
+                    <option value="-36.85,174.76">Auckland</option>
+                </optgroup>
+                <optgroup label="Arktyka/Antarktyka">
+                    <option value="78.22,15.64">Longyearbyen (Svalbard)</option>
+                    <option value="64.14,-21.90">Reykjavik</option>
+                    <option value="69.65,18.96">Tromso</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="loc-row" style="margin-top:0.4rem">
+            <input type="number" id="lat-input" placeholder="szer. geog." step="0.01" min="-90" max="90">
+            <input type="number" id="lng-input" placeholder="dl. geog." step="0.01" min="-180" max="180">
+            <button class="secondary" onclick="setManualLocation()">Ustaw</button>
+        </div>
+        <div class="loc-status" id="loc-status">Podaj lokalizacje aby obliczyc godziny planetarne i wschody/zachody Slonca</div>
+    </div>
+
+    <div id="polar-warning" style="display:none"></div>
+
+    <div id="today-section" class="today-display">
+        <div style="color: var(--text-muted)">Obliczam pozycje astronomiczne...</div>
+    </div>
+
+    <div id="planetary-section" style="display:none"></div>
+
+    <div class="year-nav">
+        <button onclick="changeYear(-1)">&larr;</button>
+        <div class="year-label" id="year-label"></div>
+        <button onclick="changeYear(1)">&rarr;</button>
+    </div>
+    <div class="year-summary" id="year-summary"></div>
+    <div class="months-grid" id="months-grid"></div>
+
+    <div class="converter">
+        <h3>Konwerter dat</h3>
+        <input type="date" id="converter-input" onchange="convertDate(this.value)">
+        <div class="result" id="converter-result">Wybierz date do konwersji</div>
+    </div>
+
+    <script>
+        // ========== SUNCALC (minimal inline implementation) ==========
+        const RAD = Math.PI / 180;
+        const DAY_MS = 1000 * 60 * 60 * 24;
+        const J1970 = 2440588;
+        const J2000 = 2451545;
+        const E = RAD * 23.4397; // obliquity of earth
+
+        function toJulian(date) { return date.valueOf() / DAY_MS - 0.5 + J1970; }
+        function fromJulian(j) { return new Date((j + 0.5 - J1970) * DAY_MS); }
+        function toDays(date) { return toJulian(date) - J2000; }
+
+        function solarMeanAnomaly(d) { return RAD * (357.5291 + 0.98560028 * d); }
+        function eclipticLongitudeSun(M) {
+            const C = RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2*M) + 0.0003 * Math.sin(3*M));
+            const P = RAD * 102.9372; // perihelion
+            return M + C + P + Math.PI;
+        }
+        function sunDeclination(lsun) { return Math.asin(Math.sin(E) * Math.sin(lsun)); }
+        function rightAscension(lsun) { return Math.atan2(Math.sin(lsun) * Math.cos(E), Math.cos(lsun)); }
+
+        function julianCycle(d, lw) { return Math.round(d - 0.0009 - lw / (2 * Math.PI)); }
+        function approxTransit(Ht, lw, n) { return 0.0009 + (Ht + lw) / (2 * Math.PI) + n; }
+        function solarTransitJ(ds, M, L) { return J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L); }
+        function hourAngle(h, phi, dec) {
+            const cosH = (Math.sin(h) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
+            return cosH; // return raw cos(H) so we can detect polar conditions
+        }
+
+        function getSunTimes(date, lat, lng) {
+            const lw = RAD * -lng;
+            const phi = RAD * lat;
+            const d = toDays(date);
+            const n = julianCycle(d, lw);
+            const ds = approxTransit(0, lw, n);
+            const M = solarMeanAnomaly(ds);
+            const L = eclipticLongitudeSun(M);
+            const dec = sunDeclination(L);
+            const Jnoon = solarTransitJ(ds, M, L);
+
+            const h0 = RAD * -0.833; // sunrise angle (accounting for refraction)
+            const cosH = hourAngle(h0, phi, dec);
+
+            // Polar detection
+            if (cosH > 1) {
+                return { polarNight: true, noon: fromJulian(Jnoon) };
+            }
+            if (cosH < -1) {
+                return { polarDay: true, noon: fromJulian(Jnoon) };
+            }
+
+            const H = Math.acos(cosH);
+            const Jset = solarTransitJ(approxTransit(H, lw, n), M, L);
+            const Jrise = Jnoon - (Jset - Jnoon);
+
+            return {
+                sunrise: fromJulian(Jrise),
+                sunset: fromJulian(Jset),
+                noon: fromJulian(Jnoon),
+            };
+        }
+
+        // ========== ZODIAC CALENDAR (Meeus solar longitude) ==========
+        function julianDay(year, month, day, hour = 0) {
+            if (month <= 2) { year -= 1; month += 12; }
+            const A = Math.floor(year / 100);
+            const B = 2 - A + Math.floor(A / 4);
+            return Math.floor(365.25 * (year + 4716)) +
+                   Math.floor(30.6001 * (month + 1)) + day + hour / 24 + B - 1524.5;
+        }
+
+        function jdToDate(jd) {
+            const z = Math.floor(jd + 0.5);
+            const f = jd + 0.5 - z;
+            let a = z;
+            if (z >= 2299161) {
+                const alpha = Math.floor((z - 1867216.25) / 36524.25);
+                a = z + 1 + alpha - Math.floor(alpha / 4);
+            }
+            const b = a + 1524;
+            const c = Math.floor((b - 122.1) / 365.25);
+            const d = Math.floor(365.25 * c);
+            const e = Math.floor((b - d) / 30.6001);
+            const day = b - d - Math.floor(30.6001 * e);
+            const month = e < 14 ? e - 1 : e - 13;
+            const year = month > 2 ? c - 4716 : c - 4715;
+            const hours = f * 24;
+            return new Date(Date.UTC(year, month - 1, day, Math.floor(hours), Math.round((hours % 1) * 60)));
+        }
+
+        function sunLongitude(jd) {
+            const T = (jd - 2451545.0) / 36525;
+            const L0 = (280.46646 + 36000.76983 * T + 0.0003032 * T * T) % 360;
+            const M = ((357.52911 + 35999.05029 * T - 0.0001537 * T * T) % 360) * Math.PI / 180;
+            const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M)
+                    + (0.019993 - 0.000101 * T) * Math.sin(2 * M)
+                    + 0.000289 * Math.sin(3 * M);
+            const omega = (125.04 - 1934.136 * T) * Math.PI / 180;
+            const lon = L0 + C - 0.00569 - 0.00478 * Math.sin(omega);
+            return ((lon % 360) + 360) % 360;
+        }
+
+        function findSunCrossing(targetLon, startJD) {
+            let currentLon = sunLongitude(startJD);
+            let diff = ((targetLon - currentLon) + 360) % 360;
+            if (diff === 0) diff = 360;
+            let estJD = startJD + diff / 0.9856;
+            let lo = estJD - 5, hi = estJD + 5;
+            for (let i = 0; i < 50; i++) {
+                const mid = (lo + hi) / 2;
+                const lon = sunLongitude(mid);
+                const d = ((lon - targetLon) + 540) % 360 - 180;
+                if (Math.abs(d) < 0.0001) return mid;
+                const dLo = ((sunLongitude(lo) - targetLon) + 540) % 360 - 180;
+                if ((dLo < 0 && d < 0) || (dLo > 0 && d > 0)) lo = mid; else hi = mid;
+            }
+            return (lo + hi) / 2;
+        }
+
+        const ZODIAC = [
+            { name: "Arieneum",    symbol: "\u2648", latin: "Aries",       lon: 0 },
+            { name: "Taureneum",   symbol: "\u2649", latin: "Taurus",      lon: 30 },
+            { name: "Geminion",    symbol: "\u264a", latin: "Gemini",      lon: 60 },
+            { name: "Cancerion",   symbol: "\u264b", latin: "Cancer",      lon: 90 },
+            { name: "Leon",        symbol: "\u264c", latin: "Leo",         lon: 120 },
+            { name: "Virgeon",     symbol: "\u264d", latin: "Virgo",       lon: 150 },
+            { name: "Libreon",     symbol: "\u264e", latin: "Libra",       lon: 180 },
+            { name: "Scorpion",    symbol: "\u264f", latin: "Scorpio",     lon: 210 },
+            { name: "Sagittarion", symbol: "\u2650", latin: "Sagittarius", lon: 240 },
+            { name: "Caprineum",   symbol: "\u2651", latin: "Capricorn",   lon: 270 },
+            { name: "Aquarion",    symbol: "\u2652", latin: "Aquarius",    lon: 300 },
+            { name: "Piscion",     symbol: "\u2653", latin: "Pisces",      lon: 330 },
+        ];
+
+        const DAY_NAMES = ["Nd", "Pn", "Wt", "Sr", "Cz", "Pt", "So"];
+
+        // ========== PLANETARY HOURS ==========
+        const CHALDEAN = [
+            { name: "Saturn",  symbol: "\u2644", hex: "#808080" },
+            { name: "Jowisz",  symbol: "\u2643", hex: "#4080d0" },
+            { name: "Mars",    symbol: "\u2642", hex: "#d44040" },
+            { name: "Slonce",  symbol: "\u2609", hex: "#f0c040" },
+            { name: "Wenus",   symbol: "\u2640", hex: "#40b880" },
+            { name: "Merkury", symbol: "\u263F", hex: "#a080d0" },
+            { name: "Ksiezyc", symbol: "\u263D", hex: "#c0c8d8" },
+        ];
+
+        // Day ruler index into CHALDEAN: Sun=0, Mon=1, ...
+        const DAY_RULER_IDX = [3, 6, 2, 5, 1, 4, 0]; // Sun, Mon, Tue, Wed, Thu, Fri, Sat
+
+        function getPlanetaryHours(sunrise, sunset, nextSunrise, dayOfWeek) {
+            const dayDur = sunset - sunrise;
+            const nightDur = nextSunrise - sunset;
+            const dayHourMs = dayDur / 12;
+            const nightHourMs = nightDur / 12;
+
+            let chIdx = DAY_RULER_IDX[dayOfWeek];
+            const hours = [];
+
+            for (let i = 0; i < 24; i++) {
+                const isDay = i < 12;
+                const hourMs = isDay ? dayHourMs : nightHourMs;
+                const base = isDay ? sunrise : sunset;
+                const hourIdx = isDay ? i : i - 12;
+
+                hours.push({
+                    num: i + 1,
+                    isDay,
+                    planet: CHALDEAN[chIdx % 7],
+                    start: new Date(base.getTime() + hourIdx * hourMs),
+                    end: new Date(base.getTime() + (hourIdx + 1) * hourMs),
+                    durationMin: hourMs / 60000,
+                });
+                chIdx = (chIdx + 1) % 7;
+            }
+            return { hours, dayHourMin: dayHourMs / 60000, nightHourMin: nightHourMs / 60000 };
+        }
+
+        // ========== INGRESS CACHE ==========
+        const ingressCache = {};
+
+        function getIngresses(year) {
+            if (ingressCache[year]) return ingressCache[year];
+            const startJD = julianDay(year, 2, 1);
+            const ingresses = [];
+            let searchJD = startJD;
+            for (let i = 0; i < 12; i++) {
+                if (i === 0) searchJD = startJD;
+                const jd = findSunCrossing(i * 30, searchJD);
+                const date = jdToDate(jd);
+                ingresses.push({ signIndex: i, ...ZODIAC[i], jd, date, dateStr: date.toISOString().slice(0, 10) });
+                searchJD = jd + 25;
+            }
+            ingressCache[year] = ingresses;
+            return ingresses;
+        }
+
+        function truncToDate(d) { return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
+
+        /**
+         * Get the effective start date for a zodiac month at a given location.
+         * Rule: month starts on the first sunrise AFTER the ingress.
+         * If ingress is before sunrise on that day → month starts that day.
+         * If ingress is after sunrise on that day → month starts next day.
+         * Without location, falls back to UTC date of ingress.
+         */
+        function effectiveMonthStart(ingressDate, lat, lng) {
+            if (lat === null || lng === null) {
+                return truncToDate(ingressDate);
+            }
+            // Get sunrise on the ingress day
+            const st = getSunTimes(ingressDate, lat, lng);
+            if (st.polarDay || st.polarNight) {
+                return truncToDate(ingressDate); // fallback for polar
+            }
+            if (ingressDate.getTime() <= st.sunrise.getTime()) {
+                // Ingress happened before sunrise → this day's sunrise is already in the new sign
+                return truncToDate(ingressDate);
+            } else {
+                // Ingress happened after sunrise → next day is the first full day in new sign
+                return truncToDate(ingressDate) + DAY_MS;
+            }
+        }
+
+        function getMonthStartDates(year, lat, lng) {
+            const ingresses = getIngresses(year);
+            return ingresses.map(ing => effectiveMonthStart(ing.date, lat, lng));
+        }
+
+        function getMonthDays(year, monthIndex, lat, lng) {
+            const starts = getMonthStartDates(year, lat, lng);
+            const start = starts[monthIndex];
+            let end;
+            if (monthIndex < 11) {
+                end = starts[monthIndex + 1];
+            } else {
+                const nextStarts = getMonthStartDates(year + 1, lat, lng);
+                end = nextStarts[0];
+            }
+            return (end - start) / DAY_MS;
+        }
+
+        function gregorianToZodiac(date, lat, lng) {
+            const dateOnly = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+            const dateMs = truncToDate(dateOnly);
+            let zodiacYear = dateOnly.getUTCFullYear();
+
+            // Check if date is before this year's Aries start
+            let starts = getMonthStartDates(zodiacYear, lat, lng);
+            if (dateMs < starts[0]) {
+                zodiacYear -= 1;
+                starts = getMonthStartDates(zodiacYear, lat, lng);
+            }
+
+            // Find which month
+            let monthIdx = 0;
+            for (let i = 11; i >= 0; i--) {
+                if (dateMs >= starts[i]) { monthIdx = i; break; }
+            }
+
+            const day = Math.round((dateMs - starts[monthIdx]) / DAY_MS) + 1;
+            return { year: zodiacYear, month: monthIdx + 1, day, sign: ZODIAC[monthIdx] };
+        }
+
+        // ========== AMARÉTH ERA ==========
+        // Amaréth year 1 = zodiac year starting at Aries ingress 2026
+        // Amaréth year 0 = zodiac year 2025 (before the new era)
+        const AMARETH_EPOCH = 2025; // zodiac year 2025 = Amaréth year 0
+        function toAmareth(zodiacYear) { return zodiacYear - AMARETH_EPOCH; }
+        function fromAmareth(amarethYear) { return amarethYear + AMARETH_EPOCH; }
+        function fmtAmarethYear(zodiacYear) {
+            const a = toAmareth(zodiacYear);
+            if (a > 0) return `Rok ${a} A.A.`;
+            if (a === 0) return `Rok 0`;
+            return `Rok ${Math.abs(a)} p.A.`;
+        }
+
+        // ========== STATE ==========
+        let currentYear;
+        // Default location: Torun (53.01, 18.60)
+        let userLat = 53.01, userLng = 18.60;
+        let polarState = null; // null, 'day', 'night'
+
+        const todayUTC = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
+        const nowLocal = new Date();
+
+        // Determine zodiac year for today
+        currentYear = gregorianToZodiac(todayUTC, userLat, userLng).year;
+
+        // ========== RENDERING ==========
+
+        function fmtTime(d) {
+            return d.toLocaleTimeString('pl', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function renderToday() {
+            const zd = gregorianToZodiac(todayUTC, userLat, userLng);
+            let sunInfo = '';
+
+            if (userLat !== null) {
+                const st = getSunTimes(new Date(), userLat, userLng);
+                if (st.polarDay) {
+                    polarState = 'day';
+                    sunInfo = `<div class="sun-times"><span>Dzien polarny - Slonce nie zachodzi</span></div>`;
+                } else if (st.polarNight) {
+                    polarState = 'night';
+                    sunInfo = `<div class="sun-times"><span>Noc polarna - Slonce nie wschodzi</span></div>`;
+                } else {
+                    polarState = null;
+                    sunInfo = `<div class="sun-times">
+                        <span>Wschod: ${fmtTime(st.sunrise)}</span>
+                        <span>Zachod: ${fmtTime(st.sunset)}</span>
+                    </div>`;
+                }
+            }
+
+            document.getElementById('today-section').innerHTML = `
+                <span class="sign-symbol">${zd.sign.symbol}</span>
+                <div class="zodiac-date">${zd.day} ${zd.sign.name}, ${fmtAmarethYear(zd.year)}</div>
+                <div class="gregorian-date">${todayUTC.toISOString().slice(0, 10)} (gregorianski)</div>
+                ${sunInfo}
+            `;
+
+            renderPolarWarning();
+            renderPlanetaryHours();
+        }
+
+        function renderPolarWarning() {
+            const el = document.getElementById('polar-warning');
+            if (!polarState) {
+                el.style.display = 'none';
+                return;
+            }
+            el.style.display = 'block';
+            const isPolarDay = polarState === 'day';
+            el.innerHTML = `<div class="polar-warning">
+                <div class="pw-icon">${isPolarDay ? '☀️' : '🌑'}</div>
+                <div class="pw-title">${isPolarDay ? 'Dzien polarny' : 'Noc polarna'}</div>
+                <div class="pw-detail">
+                    ${isPolarDay ? 'Brak zachodu Slonca' : 'Brak wschodu Slonca'} w tej lokalizacji.<br>
+                    Kalendarz zodiakowy nie moze wyznaczyc godzin planetarnych w tym miejscu w tym okresie,<br>
+                    gdyz system Horae Temporales wymaga wschodu i zachodu Slonca.
+                </div>
+            </div>`;
+        }
+
+        function renderPlanetaryHours() {
+            const section = document.getElementById('planetary-section');
+            if (userLat === null || polarState) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            const now = new Date();
+
+            // Compute sunrise/sunset for today at the target location
+            const st = getSunTimes(now, userLat, userLng);
+            if (st.polarDay || st.polarNight) { section.style.display = 'none'; return; }
+
+            // If current time is before today's sunrise, we're in the "previous night"
+            // so we need yesterday's sunset → today's sunrise
+            const nowMs = now.getTime();
+            if (nowMs < st.sunrise.getTime()) {
+                const yesterday = new Date(now.getTime() - DAY_MS);
+                const stYesterday = getSunTimes(yesterday, userLat, userLng);
+                if (stYesterday.polarDay || stYesterday.polarNight) { section.style.display = 'none'; return; }
+                const ph = getPlanetaryHours(stYesterday.sunrise, stYesterday.sunset, st.sunrise, yesterday.getDay());
+                let currentIdx = -1;
+                for (let i = 0; i < ph.hours.length; i++) {
+                    if (nowMs >= ph.hours[i].start.getTime() && nowMs < ph.hours[i].end.getTime()) {
+                        currentIdx = i; break;
+                    }
+                }
+                section.innerHTML = `<div class="planetary-section">
+                    <h3>Godziny Planetarne</h3>
+                    <div class="clock-container">${buildClockSVG(ph.hours, currentIdx, stYesterday.sunrise, stYesterday.sunset, ph.dayHourMin, ph.nightHourMin)}</div>
+                </div>`;
+                return;
+            }
+
+            const tomorrow = new Date(now.getTime() + DAY_MS);
+            const stTomorrow = getSunTimes(tomorrow, userLat, userLng);
+            const nextSunrise = stTomorrow.polarDay || stTomorrow.polarNight ? null : stTomorrow.sunrise;
+
+            if (!nextSunrise) { section.style.display = 'none'; return; }
+
+            const ph = getPlanetaryHours(st.sunrise, st.sunset, nextSunrise, now.getDay());
+
+            let currentIdx = -1;
+            for (let i = 0; i < ph.hours.length; i++) {
+                if (nowMs >= ph.hours[i].start.getTime() && nowMs < ph.hours[i].end.getTime()) {
+                    currentIdx = i; break;
+                }
+            }
+
+            section.innerHTML = `<div class="planetary-section">
+                <h3>Godziny Planetarne</h3>
+                <div class="clock-container">${buildClockSVG(ph.hours, currentIdx, st.sunrise, st.sunset, ph.dayHourMin, ph.nightHourMin)}</div>
+            </div>`;
+        }
+
+        function buildClockSVG(hours, currentIdx, sunrise, sunset, dayHourMin, nightHourMin) {
+            const W = 360, H = 380;
+            const cx = W / 2, cy = 175;
+            const R_OUT = 148, R_IN = 88, R_SYM = 118, R_LBL = 162;
+            const SEG = 15; // 360/24
+            const GAP = 0.7;
+            const now = Date.now();
+
+            function polar(r, deg) {
+                const rad = (deg - 90) * Math.PI / 180;
+                return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+            }
+            function wedge(r1, r2, a1, a2) {
+                const [ox1,oy1] = polar(r2, a1), [ox2,oy2] = polar(r2, a2);
+                const [ix2,iy2] = polar(r1, a2), [ix1,iy1] = polar(r1, a1);
+                const lg = (a2 - a1) > 180 ? 1 : 0;
+                return `M${ox1},${oy1} A${r2},${r2} 0 ${lg} 1 ${ox2},${oy2} L${ix2},${iy2} A${r1},${r1} 0 ${lg} 0 ${ix1},${iy1} Z`;
+            }
+
+            let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:360px;display:block;margin:0 auto;">`;
+
+            // Soft day/night background glow
+            s += `<defs>`;
+            s += `<radialGradient id="dayGlow" cx="75%" cy="50%"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.06"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient>`;
+            s += `<radialGradient id="nightGlow" cx="25%" cy="50%"><stop offset="0%" stop-color="#304878" stop-opacity="0.08"/><stop offset="100%" stop-color="#304878" stop-opacity="0"/></radialGradient>`;
+            s += `<filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+            s += `</defs>`;
+            s += `<rect width="${W}" height="${H}" fill="none"/>`;
+            s += `<circle cx="${cx}" cy="${cy}" r="${R_OUT + 20}" fill="url(#dayGlow)"/>`;
+            s += `<circle cx="${cx}" cy="${cy}" r="${R_OUT + 20}" fill="url(#nightGlow)"/>`;
+
+            // Boundary lines: sunrise (top) and sunset (bottom)
+            const [st1x, st1y] = polar(R_IN - 4, 0);
+            const [st2x, st2y] = polar(R_OUT + 2, 0);
+            s += `<line x1="${st1x}" y1="${st1y}" x2="${st2x}" y2="${st2y}" stroke="#f0c040" stroke-width="2" opacity="0.5"/>`;
+            const [ss1x, ss1y] = polar(R_IN - 4, 180);
+            const [ss2x, ss2y] = polar(R_OUT + 2, 180);
+            s += `<line x1="${ss1x}" y1="${ss1y}" x2="${ss2x}" y2="${ss2y}" stroke="#6080b0" stroke-width="2" opacity="0.5"/>`;
+
+            // 24 hour segments
+            for (let i = 0; i < 24; i++) {
+                const h = hours[i];
+                const a1 = i * SEG + GAP / 2;
+                const a2 = (i + 1) * SEG - GAP / 2;
+                const isDay = i < 12;
+                const isCurrent = i === currentIdx;
+                const isPast = now > h.end.getTime();
+
+                let fill, fOpacity, sW, sC;
+                if (isCurrent) {
+                    fill = h.planet.hex; fOpacity = 0.45; sW = 2.5; sC = h.planet.hex;
+                } else {
+                    fill = isDay ? '#f0c040' : '#304878';
+                    fOpacity = isPast ? 0.06 : (isDay ? 0.15 : 0.22);
+                    sW = 0.5; sC = '#30363d';
+                }
+
+                s += `<path d="${wedge(R_IN, R_OUT, a1, a2)}" fill="${fill}" fill-opacity="${fOpacity}" stroke="${sC}" stroke-width="${sW}"${isCurrent ? ' filter="url(#glow)"' : ''}/>`;
+
+                // Planet symbol
+                const mid = (a1 + a2) / 2;
+                const [tx, ty] = polar(R_SYM, mid);
+                const tC = isCurrent ? '#fff' : (isPast ? '#3a3a3a' : h.planet.hex);
+                const tS = isCurrent ? 19 : 14;
+                const tW = isCurrent ? 'bold' : 'normal';
+                s += `<text x="${tx}" y="${ty}" fill="${tC}" font-size="${tS}" text-anchor="middle" dominant-baseline="central" font-weight="${tW}">${h.planet.symbol}</text>`;
+
+                // Time label on hover area (invisible rect with title)
+                const [hx, hy] = polar(R_SYM, mid);
+                s += `<circle cx="${hx}" cy="${hy}" r="12" fill="transparent"><title>${h.planet.name} ${fmtTime(h.start)}-${fmtTime(h.end)} (${Math.round(h.durationMin)} min)</title></circle>`;
+            }
+
+            // Center circle (drawn before hand so hand appears on top)
+            s += `<circle cx="${cx}" cy="${cy}" r="${R_IN - 6}" fill="#111820" stroke="#30363d" stroke-width="1"/>`;
+
+            // Clock hand (from center circle edge to outer ring)
+            if (currentIdx >= 0) {
+                const h = hours[currentIdx];
+                const progress = Math.min(1, (now - h.start.getTime()) / (h.end.getTime() - h.start.getTime()));
+                const handAngle = currentIdx * SEG + SEG * progress;
+                const R_HAND_START = R_IN - 5;
+                const [hsx, hsy] = polar(R_HAND_START, handAngle);
+                const [hx, hy] = polar(R_OUT - 4, handAngle);
+                s += `<line x1="${hsx}" y1="${hsy}" x2="${hx}" y2="${hy}" stroke="${h.planet.hex}" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>`;
+                s += `<circle cx="${hx}" cy="${hy}" r="4" fill="${h.planet.hex}" opacity="0.9"/>`;
+            }
+
+            // Center content
+            if (currentIdx >= 0) {
+                const h = hours[currentIdx];
+                const remaining = Math.max(0, Math.round((h.end.getTime() - now) / 60000));
+                s += `<text x="${cx}" y="${cy - 25}" fill="${h.planet.hex}" font-size="34" text-anchor="middle" dominant-baseline="central" font-weight="bold">${h.planet.symbol}</text>`;
+                s += `<text x="${cx}" y="${cy + 3}" fill="#e6edf3" font-size="13" text-anchor="middle" dominant-baseline="central" font-weight="600">Godzina ${h.planet.name}</text>`;
+                s += `<text x="${cx}" y="${cy + 19}" fill="#8b949e" font-size="10" text-anchor="middle" dominant-baseline="central">${h.isDay ? 'Dzienna' : 'Nocna'} ${h.isDay ? h.num : h.num-12}/12 \u00b7 ${fmtTime(h.start)}\u2013${fmtTime(h.end)}</text>`;
+                s += `<text x="${cx}" y="${cy + 34}" fill="#8b949e" font-size="9" text-anchor="middle" dominant-baseline="central">jeszcze ${remaining} min \u00b7 ${Math.round(h.durationMin)} min/godz</text>`;
+            } else {
+                s += `<text x="${cx}" y="${cy}" fill="#8b949e" font-size="11" text-anchor="middle" dominant-baseline="central">poza zakresem godzin</text>`;
+            }
+
+            // Sunrise/Sunset labels
+            s += `<text x="${cx}" y="${cy - R_OUT - 12}" fill="#f0c040" font-size="11" text-anchor="middle" font-weight="600">\u2600 Wschod ${fmtTime(sunrise)}</text>`;
+            s += `<text x="${cx}" y="${cy + R_OUT + 16}" fill="#6080b0" font-size="11" text-anchor="middle" font-weight="600">\u263D Zachod ${fmtTime(sunset)}</text>`;
+
+            // Day/Night side labels
+            s += `<text x="${cx + R_OUT + 12}" y="${cy}" fill="#f0c04044" font-size="9" text-anchor="middle" dominant-baseline="central" transform="rotate(90,${cx + R_OUT + 12},${cy})" letter-spacing="3">DZIEN</text>`;
+            s += `<text x="${cx - R_OUT - 12}" y="${cy}" fill="#30487844" font-size="9" text-anchor="middle" dominant-baseline="central" transform="rotate(-90,${cx - R_OUT - 12},${cy})" letter-spacing="3">NOC</text>`;
+
+            // Duration info at bottom
+            s += `<text x="${cx}" y="${H - 8}" fill="#8b949e" font-size="9" text-anchor="middle">Godz. dzienna: ${Math.round(dayHourMin)} min \u00b7 Godz. nocna: ${Math.round(nightHourMin)} min</text>`;
+
+            s += `</svg>`;
+            return s;
+        }
+
+        function renderYear(year) {
+            const ingresses = getIngresses(year);
+            const starts = getMonthStartDates(year, userLat, userLng);
+            const todayZodiac = gregorianToZodiac(todayUTC, userLat, userLng);
+            document.getElementById('year-label').textContent = fmtAmarethYear(year);
+            let totalDays = 0;
+            const monthsHTML = ingresses.map((ing, i) => {
+                const days = getMonthDays(year, i, userLat, userLng);
+                totalDays += days;
+                const isCurrent = todayZodiac.year === year && todayZodiac.month === i + 1;
+                const startDate = new Date(starts[i]);
+                const startDow = startDate.getUTCDay();
+                let daysHTML = DAY_NAMES.map(d => `<div class="day-label">${d}</div>`).join('');
+                for (let e = 0; e < startDow; e++) daysHTML += '<div class="day-cell empty"></div>';
+                for (let d = 1; d <= days; d++) {
+                    const isToday = isCurrent && d === todayZodiac.day;
+                    daysHTML += `<div class="day-cell${isToday ? ' today' : ''}">${d}</div>`;
+                }
+                const dateStr = `${startDate.getUTCDate()} ${startDate.toLocaleString('pl', {month:'short', timeZone:'UTC'})} ${startDate.getUTCFullYear()}`;
+                return `<div class="month-card${isCurrent ? ' current' : ''}">
+                    <div class="month-header">
+                        <span class="symbol">${ing.symbol}</span>
+                        <span class="name">${ing.name}</span>
+                        <span class="days-badge">${days} dni</span>
+                    </div>
+                    <div class="month-info"><span>od ${dateStr}</span><span>${ing.lon}\u00b0\u2013${ing.lon+30}\u00b0</span></div>
+                    <div class="days-grid">${daysHTML}</div>
+                </div>`;
+            }).join('');
+            document.getElementById('months-grid').innerHTML = monthsHTML;
+            document.getElementById('year-summary').textContent = `Suma dni: ${totalDays}`;
+        }
+
+        // ========== LOCATION HANDLING ==========
+
+        function setLocation(lat, lng, label) {
+            userLat = lat;
+            userLng = lng;
+            document.getElementById('loc-status').textContent = `${label} (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
+            document.getElementById('lat-input').value = lat.toFixed(2);
+            document.getElementById('lng-input').value = lng.toFixed(2);
+            // Recalculate current zodiac year with location
+            currentYear = gregorianToZodiac(todayUTC, userLat, userLng).year;
+            renderToday();
+            renderYear(currentYear);
+        }
+
+        window.requestGeolocation = function() {
+            if (!navigator.geolocation) {
+                document.getElementById('loc-status').textContent = 'Geolokalizacja niedostepna w tej przegladarce';
+                return;
+            }
+            document.getElementById('loc-status').textContent = 'Pobieram lokalizacje...';
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setLocation(pos.coords.latitude, pos.coords.longitude, 'Twoja lokalizacja'),
+                (err) => { document.getElementById('loc-status').textContent = 'Nie udalo sie pobrac lokalizacji: ' + err.message; }
+            );
+        };
+
+        window.selectCity = function(val) {
+            if (!val) return;
+            const [lat, lng] = val.split(',').map(Number);
+            const sel = document.getElementById('city-select');
+            const label = sel.options[sel.selectedIndex].text;
+            setLocation(lat, lng, label);
+        };
+
+        window.setManualLocation = function() {
+            const lat = parseFloat(document.getElementById('lat-input').value);
+            const lng = parseFloat(document.getElementById('lng-input').value);
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                document.getElementById('loc-status').textContent = 'Nieprawidlowe wspolrzedne';
+                return;
+            }
+            setLocation(lat, lng, 'Reczna lokalizacja');
+        };
+
+        window.changeYear = function(delta) { currentYear += delta; renderYear(currentYear); };
+
+        window.convertDate = function(value) {
+            if (!value) return;
+            const parts = value.split('-');
+            const date = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+            const zd = gregorianToZodiac(date, userLat, userLng);
+            const locNote = userLat !== null ? '' : ' (UTC, bez lokalizacji)';
+            document.getElementById('converter-result').textContent =
+                `${zd.day} ${zd.sign.name} ${zd.sign.symbol} (${zd.sign.latin}), ${fmtAmarethYear(zd.year)}${locNote}`;
+        };
+
+        // ========== INIT ==========
+        document.getElementById('loc-status').textContent = `Torun (${userLat.toFixed(2)}, ${userLng.toFixed(2)})`;
+        document.getElementById('lat-input').value = userLat.toFixed(2);
+        document.getElementById('lng-input').value = userLng.toFixed(2);
+        document.getElementById('city-select').value = '53.01,18.60';
+        renderToday();
+        renderYear(currentYear);
+        document.getElementById('converter-input').value = todayUTC.toISOString().slice(0, 10);
+        window.convertDate(todayUTC.toISOString().slice(0, 10));
+
+        // Auto-refresh planetary hours every minute
+        setInterval(() => { if (userLat !== null) renderPlanetaryHours(); }, 60000);
+    </script>
+</body>
+</html>
