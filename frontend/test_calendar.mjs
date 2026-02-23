@@ -1,193 +1,19 @@
 /**
  * Tests for frontend zodiac calendar logic.
- * Extracts the core algorithms from index.html and verifies boundaries.
+ * Imports the shared engine module and verifies boundaries.
  * Run: node test_calendar.mjs
  */
 
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 
-// ========== Extracted from index.html ==========
-
-const RAD = Math.PI / 180;
-const DAY_MS = 1000 * 60 * 60 * 24;
-
-function julianDay(year, month, day, hour = 0) {
-    if (month <= 2) { year -= 1; month += 12; }
-    const A = Math.floor(year / 100);
-    const B = 2 - A + Math.floor(A / 4);
-    return Math.floor(365.25 * (year + 4716)) +
-           Math.floor(30.6001 * (month + 1)) + day + hour / 24 + B - 1524.5;
-}
-
-function jdToDate(jd) {
-    const z = Math.floor(jd + 0.5);
-    const f = jd + 0.5 - z;
-    let a = z;
-    if (z >= 2299161) {
-        const alpha = Math.floor((z - 1867216.25) / 36524.25);
-        a = z + 1 + alpha - Math.floor(alpha / 4);
-    }
-    const b = a + 1524;
-    const c = Math.floor((b - 122.1) / 365.25);
-    const d = Math.floor(365.25 * c);
-    const e = Math.floor((b - d) / 30.6001);
-    const day = b - d - Math.floor(30.6001 * e);
-    const month = e < 14 ? e - 1 : e - 13;
-    const year = month > 2 ? c - 4716 : c - 4715;
-    const hours = f * 24;
-    return new Date(Date.UTC(year, month - 1, day, Math.floor(hours), Math.round((hours % 1) * 60)));
-}
-
-function sunLongitude(jd) {
-    const T = (jd - 2451545.0) / 36525;
-    const L0 = (280.46646 + 36000.76983 * T + 0.0003032 * T * T) % 360;
-    const M = ((357.52911 + 35999.05029 * T - 0.0001537 * T * T) % 360) * Math.PI / 180;
-    const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M)
-            + (0.019993 - 0.000101 * T) * Math.sin(2 * M)
-            + 0.000289 * Math.sin(3 * M);
-    const omega = (125.04 - 1934.136 * T) * Math.PI / 180;
-    const lon = L0 + C - 0.00569 - 0.00478 * Math.sin(omega);
-    return ((lon % 360) + 360) % 360;
-}
-
-function findSunCrossing(targetLon, startJD) {
-    let currentLon = sunLongitude(startJD);
-    let diff = ((targetLon - currentLon) + 360) % 360;
-    if (diff === 0) diff = 360;
-    let estJD = startJD + diff / 0.9856;
-    let lo = estJD - 5, hi = estJD + 5;
-    for (let i = 0; i < 50; i++) {
-        const mid = (lo + hi) / 2;
-        const lon = sunLongitude(mid);
-        const d = ((lon - targetLon) + 540) % 360 - 180;
-        if (Math.abs(d) < 0.0001) return mid;
-        const dLo = ((sunLongitude(lo) - targetLon) + 540) % 360 - 180;
-        if ((dLo < 0 && d < 0) || (dLo > 0 && d > 0)) lo = mid; else hi = mid;
-    }
-    return (lo + hi) / 2;
-}
-
-const ZODIAC = [
-    { name: "Arieneum",    lon: 0 },   { name: "Taureneum",   lon: 30 },
-    { name: "Geminion",    lon: 60 },  { name: "Cancerion",   lon: 90 },
-    { name: "Leon",        lon: 120 }, { name: "Virgeon",     lon: 150 },
-    { name: "Libreon",     lon: 180 }, { name: "Scorpion",    lon: 210 },
-    { name: "Sagittarion", lon: 240 }, { name: "Caprineum",   lon: 270 },
-    { name: "Aquarion",    lon: 300 }, { name: "Piscion",     lon: 330 },
-];
-
-const ingressCache = {};
-
-function getIngresses(year) {
-    if (ingressCache[year]) return ingressCache[year];
-    const startJD = julianDay(year, 2, 1);
-    const ingresses = [];
-    let searchJD = startJD;
-    for (let i = 0; i < 12; i++) {
-        if (i === 0) searchJD = startJD;
-        const jd = findSunCrossing(i * 30, searchJD);
-        const date = jdToDate(jd);
-        ingresses.push({ signIndex: i, ...ZODIAC[i], jd, date });
-        searchJD = jd + 25;
-    }
-    ingressCache[year] = ingresses;
-    return ingresses;
-}
-
-function truncToDate(d) { return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
-
-function getMonthDays(year, monthIndex) {
-    const ingresses = getIngresses(year);
-    const start = truncToDate(ingresses[monthIndex].date);
-    let end;
-    if (monthIndex < 11) end = truncToDate(ingresses[monthIndex + 1].date);
-    else end = truncToDate(getIngresses(year + 1)[0].date);
-    return (end - start) / DAY_MS;
-}
-
-function gregorianToZodiac(date) {
-    const dateOnly = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-    let zodiacYear = dateOnly.getUTCFullYear();
-    let ingresses = getIngresses(zodiacYear);
-    const ariesDate = new Date(Date.UTC(ingresses[0].date.getUTCFullYear(), ingresses[0].date.getUTCMonth(), ingresses[0].date.getUTCDate()));
-    if (dateOnly < ariesDate) { zodiacYear -= 1; ingresses = getIngresses(zodiacYear); }
-    let monthIdx = 0;
-    for (let i = 11; i >= 0; i--) {
-        const mStart = new Date(Date.UTC(ingresses[i].date.getUTCFullYear(), ingresses[i].date.getUTCMonth(), ingresses[i].date.getUTCDate()));
-        if (dateOnly >= mStart) { monthIdx = i; break; }
-    }
-    const monthStart = new Date(Date.UTC(ingresses[monthIdx].date.getUTCFullYear(), ingresses[monthIdx].date.getUTCMonth(), ingresses[monthIdx].date.getUTCDate()));
-    const day = Math.round((dateOnly - monthStart) / DAY_MS) + 1;
-    return { year: zodiacYear, month: monthIdx + 1, day, sign: ZODIAC[monthIdx] };
-}
-
-// ========== SunCalc (extracted) ==========
-
-const J1970 = 2440588, J2000 = 2451545, E = RAD * 23.4397;
-function toJulian(date) { return date.valueOf() / DAY_MS - 0.5 + J1970; }
-function fromJulian(j) { return new Date((j + 0.5 - J1970) * DAY_MS); }
-function toDays(date) { return toJulian(date) - J2000; }
-function solarMeanAnomaly(d) { return RAD * (357.5291 + 0.98560028 * d); }
-function eclipticLongitudeSun(M) {
-    const C = RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2*M) + 0.0003 * Math.sin(3*M));
-    const P = RAD * 102.9372;
-    return M + C + P + Math.PI;
-}
-function sunDeclination(lsun) { return Math.asin(Math.sin(E) * Math.sin(lsun)); }
-function julianCycle(d, lw) { return Math.round(d - 0.0009 - lw / (2 * Math.PI)); }
-function approxTransit(Ht, lw, n) { return 0.0009 + (Ht + lw) / (2 * Math.PI) + n; }
-function solarTransitJ(ds, M, L) { return J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L); }
-function hourAngle(h, phi, dec) {
-    return (Math.sin(h) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
-}
-function getSunTimes(date, lat, lng) {
-    const lw = RAD * -lng, phi = RAD * lat, d = toDays(date);
-    const n = julianCycle(d, lw);
-    const ds = approxTransit(0, lw, n);
-    const M = solarMeanAnomaly(ds), L = eclipticLongitudeSun(M);
-    const dec = sunDeclination(L), Jnoon = solarTransitJ(ds, M, L);
-    const h0 = RAD * -0.833;
-    const cosH = hourAngle(h0, phi, dec);
-    if (cosH > 1) return { polarNight: true, noon: fromJulian(Jnoon) };
-    if (cosH < -1) return { polarDay: true, noon: fromJulian(Jnoon) };
-    const H = Math.acos(cosH);
-    const Jset = solarTransitJ(approxTransit(H, lw, n), M, L);
-    const Jrise = Jnoon - (Jset - Jnoon);
-    return { sunrise: fromJulian(Jrise), sunset: fromJulian(Jset), noon: fromJulian(Jnoon) };
-}
-
-// ========== Planetary Hours (extracted) ==========
-
-const CHALDEAN = [
-    { name: "Saturn" }, { name: "Jowisz" }, { name: "Mars" },
-    { name: "Slonce" }, { name: "Wenus" }, { name: "Merkury" }, { name: "Ksiezyc" },
-];
-const DAY_RULER_IDX = [3, 6, 2, 5, 1, 4, 0];
-
-function getPlanetaryHours(sunrise, sunset, nextSunrise, dayOfWeek) {
-    const dayDur = sunset - sunrise;
-    const nightDur = nextSunrise - sunset;
-    const dayHourMs = dayDur / 12;
-    const nightHourMs = nightDur / 12;
-    let chIdx = DAY_RULER_IDX[dayOfWeek];
-    const hours = [];
-    for (let i = 0; i < 24; i++) {
-        const isDay = i < 12;
-        const hourMs = isDay ? dayHourMs : nightHourMs;
-        const base = isDay ? sunrise : sunset;
-        const hourIdx = isDay ? i : i - 12;
-        hours.push({
-            num: i + 1, isDay,
-            planet: CHALDEAN[chIdx % 7],
-            start: new Date(base.getTime() + hourIdx * hourMs),
-            end: new Date(base.getTime() + (hourIdx + 1) * hourMs),
-            durationMin: hourMs / 60000,
-        });
-        chIdx = (chIdx + 1) % 7;
-    }
-    return { hours, dayHourMin: dayHourMs / 60000, nightHourMin: nightHourMs / 60000 };
-}
+import {
+    RAD, DAY_MS, ZODIAC, CHALDEAN, DAY_RULER_IDX,
+    getSunTimes, julianDay, jdToDate, sunLongitude, findSunCrossing,
+    getIngresses, truncToDate, effectiveMonthStart,
+    getMonthStartDates, getMonthDays, gregorianToZodiac,
+    getPlanetaryHours, toAmareth, fromAmareth, fmtAmarethYear,
+} from './engine.js';
 
 // ========== Helper ==========
 function utcDate(y, m, d) { return new Date(Date.UTC(y, m - 1, d)); }
@@ -232,7 +58,7 @@ console.log('--- Pierwszy dzien kazdego miesiaca ---');
 for (let i = 0; i < 12; i++) {
     const ingDate = ings2026[i].date;
     const dateOnly = utcDate(ingDate.getUTCFullYear(), ingDate.getUTCMonth() + 1, ingDate.getUTCDate());
-    const zd = gregorianToZodiac(dateOnly);
+    const zd = gregorianToZodiac(dateOnly, null, null);
     check(
         `Month ${i+1} first day`,
         zd.month === i + 1 && zd.day === 1,
@@ -246,8 +72,8 @@ for (let i = 0; i < 11; i++) {
     const nextIngDate = ings2026[i + 1].date;
     const nextDateOnly = utcDate(nextIngDate.getUTCFullYear(), nextIngDate.getUTCMonth() + 1, nextIngDate.getUTCDate());
     const dayBefore = new Date(nextDateOnly.getTime() - DAY_MS);
-    const zdBefore = gregorianToZodiac(dayBefore);
-    const zdNext = gregorianToZodiac(nextDateOnly);
+    const zdBefore = gregorianToZodiac(dayBefore, null, null);
+    const zdNext = gregorianToZodiac(nextDateOnly, null, null);
     check(
         `Transition ${i+1}->${i+2}`,
         zdBefore.month === i + 1 && zdNext.month === i + 2 && zdNext.day === 1,
@@ -261,12 +87,12 @@ console.log('--- Granica roku ---');
     const ariesDate = ings2026[0].date;
     const ariesDateOnly = utcDate(ariesDate.getUTCFullYear(), ariesDate.getUTCMonth() + 1, ariesDate.getUTCDate());
     const dayBefore = new Date(ariesDateOnly.getTime() - DAY_MS);
-    const zdBefore = gregorianToZodiac(dayBefore);
+    const zdBefore = gregorianToZodiac(dayBefore, null, null);
     check('Day before Aries 2026 is year 2025', zdBefore.year === 2025, `got year=${zdBefore.year}`);
-    const zdAries = gregorianToZodiac(ariesDateOnly);
+    const zdAries = gregorianToZodiac(ariesDateOnly, null, null);
     check('Aries day is year 2026 m1 d1', zdAries.year === 2026 && zdAries.month === 1 && zdAries.day === 1,
         `got y=${zdAries.year} m=${zdAries.month} d=${zdAries.day}`);
-    const zdJan = gregorianToZodiac(utcDate(2026, 1, 15));
+    const zdJan = gregorianToZodiac(utcDate(2026, 1, 15), null, null);
     check('Jan 15 2026 is zodiac year 2025', zdJan.year === 2025, `got year=${zdJan.year}`);
 }
 
@@ -277,7 +103,7 @@ const roundTripDates = [
     utcDate(2026, 12, 25), utcDate(2027, 1, 15), utcDate(2026, 1, 1),
 ];
 for (const d of roundTripDates) {
-    const zd = gregorianToZodiac(d);
+    const zd = gregorianToZodiac(d, null, null);
     // Reconstruct Gregorian from zodiac
     const ings = getIngresses(zd.year);
     const monthStart = ings[zd.month - 1].date;
@@ -293,7 +119,7 @@ for (const d of roundTripDates) {
 console.log('--- Dlugosci miesiecy ---');
 let totalDays2026 = 0;
 for (let i = 0; i < 12; i++) {
-    const days = getMonthDays(2026, i);
+    const days = getMonthDays(2026, i, null, null);
     totalDays2026 += days;
     check(`Month ${i+1} length ${days}`, days >= 29 && days <= 32, `got ${days}`);
 }
@@ -302,7 +128,7 @@ check('Year 2026 total days', totalDays2026 === 365 || totalDays2026 === 366, `g
 // Test across years
 for (const year of [2024, 2025, 2027, 2028]) {
     let total = 0;
-    for (let i = 0; i < 12; i++) total += getMonthDays(year, i);
+    for (let i = 0; i < 12; i++) total += getMonthDays(year, i, null, null);
     check(`Year ${year} total`, total === 365 || total === 366, `got ${total}`);
 }
 
@@ -316,7 +142,7 @@ console.log('--- Ciaglosc pokrycia (brak luk) ---');
     let gapFound = false;
     let current = new Date(start.getTime());
     while (current < end) {
-        const zd = gregorianToZodiac(current);
+        const zd = gregorianToZodiac(current, null, null);
         if (prev) {
             if (zd.month === prev.month) {
                 if (zd.day !== prev.day + 1) { gapFound = true; break; }
@@ -448,7 +274,7 @@ console.log('--- Cross-walidacja backend vs frontend ---');
         [2026, 1, 15, 2025, -1, -1],  // previous zodiac year
     ];
     for (const [gy, gm, gd, expectedYear, expectedMonth, _] of testDates) {
-        const zd = gregorianToZodiac(utcDate(gy, gm, gd));
+        const zd = gregorianToZodiac(utcDate(gy, gm, gd), null, null);
         check(
             `Cross-val ${gy}-${String(gm).padStart(2,'0')}-${String(gd).padStart(2,'0')} year`,
             zd.year === expectedYear,
