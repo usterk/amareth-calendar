@@ -377,14 +377,26 @@
             };
         }
 
+        // Hours since sunrise, handling midnight wrap. Result in [0, 24).
+        function hoursSince(ref, h) {
+            return ((h - ref) % 24 + 24) % 24;
+        }
+
         function skyColor(angleDeg, sunriseH, sunsetH) {
-            // Convert angle to hour-of-day
             const hour = ((angleDeg / 360) * 24 + 12) % 24;
 
-            const DAWN_START = sunriseH - 1.0;
-            const DAWN_END = sunriseH + 0.5;
-            const DUSK_START = sunsetH - 0.5;
-            const DUSK_END = sunsetH + 1.0;
+            // Day length (handles midnight wrap, e.g. sunrise=14 sunset=1 → dayLen=11)
+            let dayLen = ((sunsetH - sunriseH) % 24 + 24) % 24;
+            const nightLen = 24 - dayLen;
+
+            // Hours since sunrise [0, 24)
+            const t = hoursSince(sunriseH, hour);
+
+            // Transition durations (clamped for very short days/nights)
+            const DAWN_POST = Math.min(0.5, dayLen * 0.1);
+            const DUSK_PRE  = Math.min(0.5, dayLen * 0.1);
+            const DUSK_POST = Math.min(1.0, nightLen * 0.15);
+            const DAWN_PRE  = Math.min(1.0, nightLen * 0.15);
 
             const NIGHT     = { r: 8,   g: 10,  b: 30  };
             const TWILIGHT  = { r: 20,  g: 18,  b: 55  };
@@ -393,46 +405,48 @@
             const DAY_HOR   = { r: 90,  g: 150, b: 210 };
             const DAY_ZEN   = { r: 45,  g: 110, b: 190 };
 
-            // Normalize hour for comparison (handle wrap around midnight)
-            let h = hour;
-
-            // Night: after dusk end or before dawn start
-            if (h >= DUSK_END || h <= DAWN_START) {
-                // Deep into night — blend between night and twilight near boundaries
-                if (h >= DUSK_END) {
-                    const tNight = Math.min(1, (h - DUSK_END) / 2.0);
-                    return lerpColor(TWILIGHT, NIGHT, tNight);
-                } else {
-                    const tNight = Math.min(1, (DAWN_START - h) / 2.0);
-                    return lerpColor(TWILIGHT, NIGHT, tNight);
-                }
+            // DAWN: just after sunrise [0, DAWN_POST)
+            if (t < DAWN_POST) {
+                const p = DAWN_POST > 0 ? t / DAWN_POST : 1;
+                return lerpColor(DAWN_WARM, DAY_HOR, p);
             }
 
-            // Dawn transition
-            if (h >= DAWN_START && h < DAWN_END) {
-                const t = (h - DAWN_START) / (DAWN_END - DAWN_START);
-                if (t < 0.4) return lerpColor(NIGHT, TWILIGHT, t / 0.4);
-                if (t < 0.7) return lerpColor(TWILIGHT, DAWN_WARM, (t - 0.4) / 0.3);
-                return lerpColor(DAWN_WARM, DAY_HOR, (t - 0.7) / 0.3);
+            // FULL DAY: [DAWN_POST, dayLen - DUSK_PRE)
+            if (t >= DAWN_POST && t < dayLen - DUSK_PRE) {
+                const dayCore = dayLen - DAWN_POST - DUSK_PRE;
+                const mid = dayLen / 2;
+                const halfSpan = dayCore / 2;
+                const dist = halfSpan > 0 ? Math.abs(t - mid) / halfSpan : 0;
+                return lerpColor(DAY_ZEN, DAY_HOR, Math.min(1, dist * dist));
             }
 
-            // Dusk transition
-            if (h > DUSK_START && h < DUSK_END) {
-                const t = (h - DUSK_START) / (DUSK_END - DUSK_START);
-                if (t < 0.3) return lerpColor(DAY_HOR, GOLDEN, t / 0.3);
-                if (t < 0.6) return lerpColor(GOLDEN, DAWN_WARM, (t - 0.3) / 0.3);
-                return lerpColor(DAWN_WARM, TWILIGHT, (t - 0.6) / 0.4);
+            // PRE-DUSK: [dayLen - DUSK_PRE, dayLen)
+            if (t >= dayLen - DUSK_PRE && t < dayLen) {
+                const p = DUSK_PRE > 0 ? (t - (dayLen - DUSK_PRE)) / DUSK_PRE : 1;
+                return lerpColor(DAY_HOR, GOLDEN, p);
             }
 
-            // Full daytime
-            if (h >= DAWN_END && h <= DUSK_START) {
-                const midDay = (DAWN_END + DUSK_START) / 2;
-                const halfSpan = (DUSK_START - DAWN_END) / 2;
-                const distFromNoon = Math.abs(h - midDay) / halfSpan; // 0 = noon, 1 = horizon
-                return lerpColor(DAY_ZEN, DAY_HOR, distFromNoon * distFromNoon);
+            // DUSK: [dayLen, dayLen + DUSK_POST)
+            if (t >= dayLen && t < dayLen + DUSK_POST) {
+                const p = DUSK_POST > 0 ? (t - dayLen) / DUSK_POST : 1;
+                if (p < 0.5) return lerpColor(GOLDEN, DAWN_WARM, p * 2);
+                return lerpColor(DAWN_WARM, TWILIGHT, (p - 0.5) * 2);
             }
 
-            return NIGHT;
+            // PRE-DAWN: [24 - DAWN_PRE, 24)
+            if (t >= 24 - DAWN_PRE) {
+                const p = DAWN_PRE > 0 ? (t - (24 - DAWN_PRE)) / DAWN_PRE : 1;
+                if (p < 0.5) return lerpColor(NIGHT, TWILIGHT, p * 2);
+                return lerpColor(TWILIGHT, DAWN_WARM, (p - 0.5) * 2);
+            }
+
+            // FULL NIGHT: [dayLen + DUSK_POST, 24 - DAWN_PRE)
+            const nightCore = nightLen - DUSK_POST - DAWN_PRE;
+            const nightMid = dayLen + nightLen / 2;
+            const tFromMid = Math.abs(hoursSince(0, t) - hoursSince(0, nightMid > 24 ? nightMid - 24 : nightMid));
+            const nightHalf = nightCore / 2;
+            const np = nightHalf > 0 ? Math.min(1, Math.min(tFromMid, 24 - tFromMid) / nightHalf) : 0;
+            return lerpColor(NIGHT, TWILIGHT, np * 0.3);
         }
 
         // ===== SVG HELPERS =====
@@ -533,8 +547,9 @@
                 s += `<polyline points="${arcPoints.join(' ')}" fill="none" stroke="rgba(240,192,64,0.25)" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round"/>`;
 
                 // Small dots along the arc at hourly intervals
-                for (let hr = Math.ceil(sunriseH); hr <= Math.floor(sunsetH); hr++) {
-                    const t = (hr - sunriseH) / (sunsetH - sunriseH);
+                const dayLenH = ((sunsetH - sunriseH) % 24 + 24) % 24;
+                for (let dh = 1; dh < Math.floor(dayLenH); dh++) {
+                    const t = dh / dayLenH;
                     const angle = (sunriseAngle + t * daySpan) % 360;
                     const elev = Math.sin(t * Math.PI);
                     const r = R_SKY - 10 - elev * (R_SKY - 10 - R_PEAK);
@@ -542,10 +557,11 @@
                     s += `<circle cx="${dx}" cy="${dy}" r="1.5" fill="rgba(240,192,64,0.35)"/>`;
                 }
 
-                // Current sun position
-                const isDaytime = nowH >= sunriseH && nowH <= sunsetH;
+                // Current sun position (handle midnight wrap)
+                const hSinceRise = hoursSince(sunriseH, nowH);
+                const isDaytime = hSinceRise <= dayLenH;
                 if (isDaytime) {
-                    const tNow = (nowH - sunriseH) / (sunsetH - sunriseH);
+                    const tNow = hSinceRise / dayLenH;
                     const elevNow = Math.sin(tNow * Math.PI);
                     const rNow = R_SKY - 10 - elevNow * (R_SKY - 10 - R_PEAK);
                     const [sx, sy] = polar(cx, cy, rNow, nowAngle);
@@ -574,8 +590,8 @@
                     let a1 = timeToAngle(toDecimalHours(h.start));
                     let a2 = timeToAngle(toDecimalHours(h.end));
 
-                    // Handle midnight crossing
-                    if (a2 < a1 && (a2 - a1) > -300) {
+                    // Handle midnight crossing: if end is after start in time but angle wrapped
+                    if (h.end.getTime() > h.start.getTime() && a2 < a1) {
                         a2 += 360;
                     }
 
