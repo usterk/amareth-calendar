@@ -236,11 +236,10 @@
         }
         .location-bar select optgroup { color: var(--accent); }
         .location-bar select option { color: var(--text); background: var(--bg); }
-        .location-bar .loc-status { color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem; }
 
         /* ===== WORLD MAP ===== */
         .world-map-container {
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.3rem;
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: hidden;
@@ -293,6 +292,7 @@
             fill: var(--accent);
             animation: markerPulse 2s ease-in-out infinite;
         }
+        #city-lights circle { fill: #ffd070; }
         .map-tooltip {
             font-family: 'Raleway', sans-serif;
             font-size: 7px;
@@ -836,7 +836,6 @@
             </select>
         </div>
         <div class="world-map-container" id="world-map-container"></div>
-        <div class="loc-status" id="loc-status">Podaj lokalizacje aby obliczyc godziny planetarne i wschody/zachody Slonca</div>
     </div>
 
     <div id="polar-warning" style="display:none"></div>
@@ -1015,6 +1014,8 @@ function getWorldContinents() {
             svg += '<defs>';
             svg += '<radialGradient id="markerGlow"><stop offset="0%" stop-color="#c8a84e" stop-opacity="0.6"/><stop offset="100%" stop-color="#c8a84e" stop-opacity="0"/></radialGradient>';
             svg += '<filter id="markerBlur"><feGaussianBlur stdDeviation="1.5"/></filter>';
+            svg += '<filter id="terminatorBlur"><feGaussianBlur stdDeviation="4"/></filter>';
+            svg += '<filter id="lightGlow"><feGaussianBlur stdDeviation="1.2"/></filter>';
             svg += '</defs>';
             svg += '<rect width="720" height="360" fill="#080818"/>';
             svg += '<g class="map-grid">';
@@ -1030,6 +1031,16 @@ function getWorldContinents() {
             svg += '<g class="continents">';
             for (const c of getWorldContinents()) {
                 svg += `<path id="cont-${c.id}" d="${c.d}"/>`;
+            }
+            svg += '</g>';
+            // Night overlay
+            svg += '<path id="day-overlay-path" d="" fill="rgba(120,140,200,0.12)" filter="url(#terminatorBlur)" style="pointer-events:none"/>';
+            svg += '<path id="night-overlay-path" d="" fill="rgba(0,2,18,0.55)" filter="url(#terminatorBlur)" style="pointer-events:none"/>';
+            // City lights
+            svg += '<g id="city-lights" filter="url(#lightGlow)" style="pointer-events:none">';
+            for (const l of CITY_LIGHTS) {
+                const [lx, ly] = latLngToMapXY(l.lat, l.lng);
+                svg += `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="${l.s}" data-lat="${l.lat}" data-lng="${l.lng}" data-i="${l.i}" opacity="0"/>`;
             }
             svg += '</g>';
             svg += '<g class="map-cities">';
@@ -1055,6 +1066,7 @@ function getWorldContinents() {
 
             container.innerHTML = svg;
             setupMapInteraction();
+            updateDayNight();
         }
 
         function updateMapMarker(lat, lng) {
@@ -1146,6 +1158,245 @@ function getWorldContinents() {
                 svgEl.addEventListener('mouseleave', function() {
                     const tooltip = document.getElementById('map-tooltip');
                     if (tooltip) tooltip.style.display = 'none';
+                });
+            }
+        }
+
+        // ===== CITY LIGHTS DATA =====
+        const CITY_LIGHTS = [
+            // North America - East Coast
+            {lat:40.7,lng:-74.0,i:1.0,s:2.5},{lat:40.9,lng:-73.7,i:0.7,s:1.8},{lat:40.4,lng:-74.2,i:0.6,s:1.5},
+            {lat:42.4,lng:-71.1,i:0.7,s:1.8},{lat:39.9,lng:-75.2,i:0.7,s:1.8},{lat:38.9,lng:-77.0,i:0.7,s:1.8},
+            {lat:39.3,lng:-76.6,i:0.5,s:1.3},{lat:25.8,lng:-80.2,i:0.7,s:1.8},{lat:28.5,lng:-81.4,i:0.5,s:1.3},
+            {lat:33.7,lng:-84.4,i:0.6,s:1.5},{lat:35.8,lng:-78.6,i:0.4,s:1.2},
+            {lat:36.2,lng:-86.8,i:0.4,s:1.2},{lat:42.3,lng:-71.8,i:0.4,s:1.0},{lat:41.8,lng:-72.7,i:0.4,s:1.0},
+            {lat:40.0,lng:-82.0,i:0.4,s:1.2},{lat:39.1,lng:-84.5,i:0.5,s:1.3},{lat:40.4,lng:-80.0,i:0.5,s:1.3},
+            {lat:27.9,lng:-82.5,i:0.5,s:1.3},{lat:26.1,lng:-80.1,i:0.4,s:1.2},{lat:30.3,lng:-81.7,i:0.4,s:1.2},
+            // Great Lakes
+            {lat:41.9,lng:-87.6,i:0.8,s:2.0},{lat:42.3,lng:-83.0,i:0.6,s:1.5},
+            {lat:43.7,lng:-79.4,i:0.6,s:1.5},{lat:45.5,lng:-73.6,i:0.5,s:1.3},
+            {lat:43.0,lng:-87.9,i:0.4,s:1.2},{lat:44.9,lng:-93.3,i:0.5,s:1.3},
+            {lat:38.6,lng:-90.2,i:0.5,s:1.3},{lat:39.1,lng:-94.6,i:0.5,s:1.3},
+            // US West
+            {lat:34.1,lng:-118.2,i:0.9,s:2.2},{lat:33.9,lng:-117.9,i:0.6,s:1.5},
+            {lat:32.7,lng:-117.2,i:0.5,s:1.3},{lat:37.8,lng:-122.4,i:0.7,s:1.8},
+            {lat:47.6,lng:-122.3,i:0.5,s:1.3},{lat:33.4,lng:-112.0,i:0.5,s:1.3},
+            {lat:36.2,lng:-115.1,i:0.6,s:1.5},{lat:39.7,lng:-105.0,i:0.5,s:1.3},
+            {lat:37.3,lng:-121.9,i:0.5,s:1.3},{lat:45.5,lng:-122.7,i:0.4,s:1.2},
+            {lat:36.7,lng:-119.8,i:0.3,s:1.0},{lat:40.8,lng:-111.9,i:0.4,s:1.2},
+            // US South/Central
+            {lat:29.8,lng:-95.4,i:0.7,s:1.8},{lat:32.8,lng:-96.8,i:0.6,s:1.5},
+            {lat:30.3,lng:-97.7,i:0.5,s:1.3},{lat:29.4,lng:-98.5,i:0.5,s:1.3},
+            {lat:35.5,lng:-97.5,i:0.4,s:1.2},{lat:32.4,lng:-110.9,i:0.3,s:1.0},
+            // Canada
+            {lat:51.0,lng:-114.1,i:0.4,s:1.2},{lat:53.5,lng:-113.5,i:0.4,s:1.2},{lat:49.3,lng:-123.1,i:0.5,s:1.3},
+            {lat:45.4,lng:-75.7,i:0.5,s:1.3},{lat:43.3,lng:-79.8,i:0.4,s:1.2},
+            // Mexico
+            {lat:19.4,lng:-99.1,i:0.8,s:2.0},{lat:20.7,lng:-103.3,i:0.5,s:1.3},{lat:25.7,lng:-100.3,i:0.5,s:1.3},
+            {lat:21.2,lng:-89.6,i:0.3,s:1.0},{lat:19.2,lng:-96.1,i:0.3,s:1.0},
+            // Caribbean/Central America
+            {lat:18.5,lng:-69.9,i:0.4,s:1.2},{lat:23.1,lng:-82.4,i:0.4,s:1.2},
+            {lat:18.0,lng:-76.8,i:0.3,s:1.0},{lat:9.9,lng:-84.1,i:0.3,s:1.0},
+            {lat:14.6,lng:-90.5,i:0.4,s:1.2},{lat:8.9,lng:-79.5,i:0.3,s:1.0},
+            // South America
+            {lat:-23.6,lng:-46.6,i:0.9,s:2.2},{lat:-22.9,lng:-43.2,i:0.7,s:1.8},
+            {lat:-34.6,lng:-58.4,i:0.7,s:1.8},{lat:-33.4,lng:-70.7,i:0.6,s:1.5},
+            {lat:4.7,lng:-74.1,i:0.5,s:1.3},{lat:-12.0,lng:-77.0,i:0.5,s:1.3},
+            {lat:10.5,lng:-66.9,i:0.5,s:1.3},{lat:-15.8,lng:-47.9,i:0.5,s:1.3},
+            {lat:-8.1,lng:-34.9,i:0.4,s:1.2},{lat:-30.0,lng:-51.2,i:0.4,s:1.2},
+            {lat:-3.7,lng:-38.5,i:0.3,s:1.0},{lat:-1.5,lng:-48.5,i:0.3,s:1.0},
+            {lat:-22.8,lng:-47.1,i:0.4,s:1.2},{lat:-19.9,lng:-43.9,i:0.5,s:1.3},
+            {lat:-16.7,lng:-49.3,i:0.3,s:1.0},{lat:-23.0,lng:-43.5,i:0.4,s:1.2},
+            {lat:-2.5,lng:-44.3,i:0.3,s:1.0},{lat:-25.4,lng:-49.3,i:0.4,s:1.2},
+            {lat:-34.9,lng:-56.2,i:0.4,s:1.2},{lat:-0.2,lng:-78.5,i:0.4,s:1.2},
+            // Europe - Western
+            {lat:51.5,lng:-0.1,i:0.9,s:2.2},{lat:51.8,lng:-0.5,i:0.5,s:1.3},
+            {lat:48.9,lng:2.3,i:0.8,s:2.0},{lat:52.4,lng:4.9,i:0.7,s:1.8},
+            {lat:51.2,lng:4.4,i:0.6,s:1.5},{lat:50.9,lng:6.9,i:0.7,s:1.8},
+            {lat:50.1,lng:8.7,i:0.6,s:1.5},{lat:48.1,lng:11.6,i:0.6,s:1.5},
+            {lat:53.6,lng:10.0,i:0.5,s:1.3},{lat:52.5,lng:13.4,i:0.7,s:1.8},
+            {lat:51.4,lng:7.0,i:0.5,s:1.3},{lat:49.5,lng:11.1,i:0.4,s:1.2},
+            {lat:48.8,lng:9.2,i:0.5,s:1.3},{lat:53.1,lng:8.8,i:0.4,s:1.0},
+            {lat:51.3,lng:9.5,i:0.4,s:1.0},{lat:47.4,lng:8.5,i:0.5,s:1.3},
+            {lat:46.2,lng:6.1,i:0.4,s:1.2},{lat:50.6,lng:3.1,i:0.5,s:1.3},
+            {lat:43.6,lng:1.4,i:0.4,s:1.2},{lat:43.3,lng:5.4,i:0.5,s:1.3},
+            {lat:45.8,lng:4.8,i:0.5,s:1.3},{lat:47.2,lng:-1.6,i:0.4,s:1.0},
+            {lat:53.8,lng:-1.5,i:0.4,s:1.2},{lat:52.5,lng:-1.9,i:0.5,s:1.3},
+            {lat:55.9,lng:-3.2,i:0.4,s:1.2},{lat:53.5,lng:-2.2,i:0.5,s:1.3},
+            // Southern Europe
+            {lat:41.4,lng:2.2,i:0.6,s:1.5},{lat:40.4,lng:-3.7,i:0.7,s:1.8},
+            {lat:38.7,lng:-9.1,i:0.5,s:1.3},{lat:41.9,lng:12.5,i:0.6,s:1.5},
+            {lat:45.5,lng:9.2,i:0.7,s:1.8},{lat:43.3,lng:11.3,i:0.3,s:1.0},
+            {lat:37.9,lng:23.7,i:0.5,s:1.3},{lat:40.9,lng:14.3,i:0.5,s:1.3},
+            {lat:45.1,lng:7.7,i:0.5,s:1.3},{lat:44.5,lng:11.3,i:0.4,s:1.2},
+            {lat:39.5,lng:-0.4,i:0.4,s:1.2},{lat:37.4,lng:-5.9,i:0.4,s:1.2},
+            {lat:36.7,lng:-4.4,i:0.4,s:1.2},{lat:41.1,lng:-8.6,i:0.4,s:1.2},
+            {lat:38.1,lng:13.4,i:0.3,s:1.0},{lat:40.6,lng:22.9,i:0.4,s:1.2},
+            // Scandinavia
+            {lat:59.3,lng:18.1,i:0.5,s:1.3},{lat:59.9,lng:10.7,i:0.4,s:1.2},
+            {lat:55.7,lng:12.6,i:0.5,s:1.3},{lat:60.2,lng:25.0,i:0.4,s:1.2},
+            {lat:57.7,lng:12.0,i:0.4,s:1.2},{lat:63.4,lng:10.4,i:0.3,s:1.0},
+            // Eastern Europe
+            {lat:52.2,lng:21.0,i:0.6,s:1.5},{lat:50.1,lng:19.9,i:0.4,s:1.2},
+            {lat:50.1,lng:14.4,i:0.5,s:1.3},{lat:48.2,lng:16.4,i:0.5,s:1.3},
+            {lat:47.5,lng:19.0,i:0.5,s:1.3},{lat:44.4,lng:26.1,i:0.5,s:1.3},
+            {lat:42.7,lng:23.3,i:0.4,s:1.2},{lat:44.8,lng:20.5,i:0.4,s:1.2},
+            {lat:46.1,lng:14.5,i:0.3,s:1.0},{lat:45.8,lng:16.0,i:0.3,s:1.0},
+            {lat:51.1,lng:17.0,i:0.4,s:1.2},{lat:54.4,lng:18.6,i:0.3,s:1.0},
+            {lat:53.1,lng:23.2,i:0.3,s:1.0},{lat:51.8,lng:19.5,i:0.3,s:1.0},
+            // Russia/Ukraine
+            {lat:55.8,lng:37.6,i:0.8,s:2.0},{lat:59.9,lng:30.3,i:0.6,s:1.5},{lat:50.4,lng:30.5,i:0.6,s:1.5},
+            {lat:56.8,lng:60.6,i:0.4,s:1.2},{lat:55.0,lng:82.9,i:0.4,s:1.2},
+            {lat:54.7,lng:55.9,i:0.3,s:1.0},{lat:56.3,lng:44.0,i:0.4,s:1.2},
+            {lat:48.7,lng:44.5,i:0.3,s:1.0},{lat:47.2,lng:39.7,i:0.4,s:1.2},
+            {lat:53.2,lng:50.1,i:0.3,s:1.0},{lat:48.0,lng:37.8,i:0.3,s:1.0},
+            {lat:46.5,lng:30.7,i:0.3,s:1.0},{lat:49.8,lng:24.0,i:0.3,s:1.0},
+            // Middle East
+            {lat:41.0,lng:29.0,i:0.7,s:1.8},{lat:35.7,lng:51.4,i:0.7,s:1.8},
+            {lat:25.2,lng:55.3,i:0.7,s:1.8},{lat:24.7,lng:46.7,i:0.6,s:1.5},
+            {lat:33.9,lng:35.5,i:0.4,s:1.2},{lat:32.1,lng:34.8,i:0.5,s:1.3},
+            {lat:30.1,lng:31.2,i:0.7,s:1.8},{lat:33.3,lng:44.4,i:0.5,s:1.3},
+            {lat:36.2,lng:44.0,i:0.3,s:1.0},{lat:40.2,lng:44.5,i:0.3,s:1.0},
+            {lat:25.3,lng:51.5,i:0.4,s:1.2},{lat:23.6,lng:58.5,i:0.3,s:1.0},
+            {lat:21.5,lng:39.2,i:0.5,s:1.3},{lat:24.5,lng:39.6,i:0.3,s:1.0},
+            // South Asia
+            {lat:28.6,lng:77.2,i:0.8,s:2.0},{lat:19.1,lng:72.9,i:0.8,s:2.0},
+            {lat:13.1,lng:80.3,i:0.6,s:1.5},{lat:22.6,lng:88.4,i:0.7,s:1.8},
+            {lat:12.9,lng:77.6,i:0.6,s:1.5},{lat:23.0,lng:72.6,i:0.5,s:1.3},
+            {lat:26.8,lng:80.9,i:0.5,s:1.3},{lat:17.4,lng:78.5,i:0.6,s:1.5},
+            {lat:21.2,lng:79.1,i:0.4,s:1.2},{lat:23.3,lng:85.3,i:0.3,s:1.0},
+            {lat:26.9,lng:75.8,i:0.4,s:1.2},{lat:22.3,lng:70.8,i:0.4,s:1.2},
+            {lat:11.0,lng:77.0,i:0.4,s:1.2},{lat:18.5,lng:73.9,i:0.5,s:1.3},
+            {lat:15.4,lng:73.9,i:0.3,s:1.0},{lat:25.6,lng:85.1,i:0.4,s:1.2},
+            {lat:30.7,lng:76.8,i:0.4,s:1.2},{lat:31.5,lng:74.3,i:0.5,s:1.3},
+            {lat:33.7,lng:73.1,i:0.4,s:1.2},{lat:24.9,lng:67.0,i:0.4,s:1.2},
+            {lat:6.9,lng:79.9,i:0.4,s:1.2},{lat:23.8,lng:90.4,i:0.6,s:1.5},
+            {lat:27.7,lng:85.3,i:0.3,s:1.0},
+            // Southeast Asia
+            {lat:13.8,lng:100.5,i:0.6,s:1.5},{lat:10.8,lng:106.7,i:0.6,s:1.5},
+            {lat:14.6,lng:121.0,i:0.6,s:1.5},{lat:1.3,lng:103.8,i:0.7,s:1.8},
+            {lat:-6.2,lng:106.8,i:0.7,s:1.8},{lat:3.1,lng:101.7,i:0.5,s:1.3},
+            {lat:16.9,lng:96.2,i:0.4,s:1.2},{lat:21.0,lng:105.9,i:0.5,s:1.3},
+            {lat:7.0,lng:100.5,i:0.3,s:1.0},{lat:-7.3,lng:112.7,i:0.5,s:1.3},
+            {lat:-8.7,lng:115.2,i:0.3,s:1.0},{lat:5.4,lng:100.3,i:0.3,s:1.0},
+            {lat:11.6,lng:104.9,i:0.4,s:1.2},{lat:10.3,lng:123.9,i:0.3,s:1.0},
+            // East Asia
+            {lat:35.7,lng:139.7,i:1.0,s:2.5},{lat:35.5,lng:139.4,i:0.6,s:1.5},
+            {lat:34.7,lng:135.5,i:0.8,s:2.0},{lat:35.2,lng:137.0,i:0.6,s:1.5},
+            {lat:37.6,lng:127.0,i:0.9,s:2.2},{lat:35.2,lng:129.0,i:0.5,s:1.3},
+            {lat:31.2,lng:121.5,i:0.9,s:2.2},{lat:39.9,lng:116.4,i:0.8,s:2.0},
+            {lat:22.3,lng:114.2,i:0.8,s:2.0},{lat:23.1,lng:113.3,i:0.7,s:1.8},
+            {lat:30.3,lng:120.2,i:0.6,s:1.5},{lat:29.6,lng:106.5,i:0.6,s:1.5},
+            {lat:34.3,lng:108.9,i:0.5,s:1.3},{lat:30.6,lng:104.1,i:0.6,s:1.5},
+            {lat:45.8,lng:126.5,i:0.5,s:1.3},{lat:41.8,lng:123.4,i:0.5,s:1.3},
+            {lat:25.0,lng:121.5,i:0.6,s:1.5},
+            {lat:43.2,lng:141.3,i:0.4,s:1.2},{lat:33.6,lng:130.4,i:0.4,s:1.2},
+            {lat:38.3,lng:140.9,i:0.4,s:1.2},{lat:34.4,lng:132.5,i:0.3,s:1.0},
+            {lat:36.6,lng:116.9,i:0.5,s:1.3},{lat:38.0,lng:114.5,i:0.5,s:1.3},
+            {lat:32.1,lng:118.8,i:0.5,s:1.3},{lat:28.2,lng:113.0,i:0.5,s:1.3},
+            {lat:26.1,lng:119.3,i:0.5,s:1.3},{lat:36.1,lng:120.4,i:0.5,s:1.3},
+            {lat:24.5,lng:118.1,i:0.4,s:1.2},{lat:22.5,lng:108.3,i:0.4,s:1.2},
+            {lat:25.0,lng:102.7,i:0.4,s:1.2},{lat:43.8,lng:87.6,i:0.3,s:1.0},
+            {lat:47.9,lng:106.9,i:0.3,s:1.0},{lat:37.5,lng:126.6,i:0.5,s:1.3},
+            {lat:35.9,lng:128.6,i:0.4,s:1.2},
+            // Africa
+            {lat:33.6,lng:-7.6,i:0.5,s:1.3},{lat:36.8,lng:3.1,i:0.4,s:1.2},
+            {lat:6.5,lng:3.4,i:0.6,s:1.5},{lat:5.6,lng:-0.2,i:0.3,s:1.0},
+            {lat:-1.3,lng:36.8,i:0.4,s:1.2},{lat:9.0,lng:38.7,i:0.3,s:1.0},
+            {lat:-26.2,lng:28.0,i:0.6,s:1.5},{lat:-33.9,lng:18.4,i:0.5,s:1.3},
+            {lat:-6.8,lng:39.3,i:0.3,s:1.0},{lat:15.5,lng:32.5,i:0.3,s:1.0},
+            {lat:36.8,lng:10.2,i:0.3,s:1.0},{lat:34.0,lng:-5.0,i:0.3,s:1.0},
+            {lat:12.0,lng:-1.5,i:0.2,s:0.8},{lat:6.3,lng:-10.8,i:0.2,s:0.8},
+            {lat:14.7,lng:-17.5,i:0.3,s:1.0},{lat:4.1,lng:9.7,i:0.3,s:1.0},
+            {lat:-4.3,lng:15.3,i:0.3,s:1.0},{lat:-15.4,lng:28.3,i:0.2,s:0.8},
+            {lat:-17.9,lng:31.1,i:0.2,s:0.8},{lat:-1.9,lng:30.1,i:0.2,s:0.8},
+            {lat:-29.9,lng:31.0,i:0.3,s:1.0},{lat:-25.7,lng:28.2,i:0.3,s:1.0},
+            {lat:7.5,lng:3.9,i:0.3,s:1.0},{lat:9.1,lng:7.5,i:0.3,s:1.0},
+            {lat:11.9,lng:8.5,i:0.3,s:1.0},
+            // Oceania
+            {lat:-33.9,lng:151.2,i:0.7,s:1.8},{lat:-37.8,lng:145.0,i:0.6,s:1.5},
+            {lat:-27.5,lng:153.0,i:0.5,s:1.3},{lat:-31.9,lng:115.9,i:0.4,s:1.2},
+            {lat:-36.8,lng:174.8,i:0.4,s:1.2},{lat:-41.3,lng:174.8,i:0.3,s:1.0},
+            {lat:-34.9,lng:138.6,i:0.3,s:1.0},{lat:-12.5,lng:130.8,i:0.2,s:0.8},
+            {lat:-16.9,lng:145.8,i:0.2,s:0.8},{lat:-43.5,lng:172.6,i:0.3,s:1.0},
+        ];
+
+        // ===== DAY/NIGHT FUNCTIONS =====
+        function getSubsolarPoint(now) {
+            const jd = julianDay(now.getUTCFullYear(), now.getUTCMonth() + 1,
+                now.getUTCDate(), now.getUTCHours() + now.getUTCMinutes() / 60 + now.getUTCSeconds() / 3600);
+            const solarLon = sunLongitude(jd);
+            const oblRad = 23.4393 * RAD;
+            const lonRad = solarLon * RAD;
+            const decl = Math.asin(Math.sin(oblRad) * Math.sin(lonRad)) / RAD;
+            const ra = Math.atan2(Math.cos(oblRad) * Math.sin(lonRad), Math.cos(lonRad)) / RAD;
+            const T = (jd - 2451545.0) / 36525;
+            const gmst = (280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T) % 360;
+            let lng = ra - gmst;
+            lng = ((lng % 360) + 540) % 360 - 180;
+            return { lat: decl, lng: lng };
+        }
+
+        function getSolarAltitude(lat, lng, sub) {
+            const latR = lat * RAD, declR = sub.lat * RAD;
+            const H = (lng - sub.lng) * RAD;
+            return Math.asin(
+                Math.sin(latR) * Math.sin(declR) +
+                Math.cos(latR) * Math.cos(declR) * Math.cos(H)
+            ) / RAD;
+        }
+
+        function getNightPath(sub) {
+            const declR = sub.lat * RAD;
+            const pts = [];
+            for (let lng = -180; lng <= 180; lng += 2) {
+                const H = (lng - sub.lng) * RAD;
+                let lat;
+                if (Math.abs(sub.lat) < 0.1) {
+                    lat = Math.atan(-Math.cos(H) / Math.tan(0.1 * RAD)) / RAD;
+                } else {
+                    lat = Math.atan(-Math.cos(H) / Math.tan(declR)) / RAD;
+                }
+                lat = Math.max(-90, Math.min(90, lat));
+                const [x, y] = latLngToMapXY(lat, lng);
+                pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+            }
+            const line = 'M' + pts.join(' L');
+            let night, day;
+            if (sub.lat >= 0) {
+                night = line + ' L720,360 L0,360 Z';
+                day = line + ' L720,0 L0,0 Z';
+            } else {
+                night = line + ' L720,0 L0,0 Z';
+                day = line + ' L720,360 L0,360 Z';
+            }
+            return { night, day };
+        }
+
+        function lightOpacity(solarAlt, baseI) {
+            if (solarAlt > 0) return 0;
+            let f;
+            if (solarAlt > -6) f = 0.3 * (-solarAlt / 6);
+            else if (solarAlt > -12) f = 0.3 + 0.4 * ((-solarAlt - 6) / 6);
+            else if (solarAlt > -18) f = 0.7 + 0.3 * ((-solarAlt - 12) / 6);
+            else f = 1.0;
+            return baseI * f;
+        }
+
+        function updateDayNight() {
+            const now = new Date();
+            const sub = getSubsolarPoint(now);
+            const paths = getNightPath(sub);
+            const nightEl = document.getElementById('night-overlay-path');
+            if (nightEl) nightEl.setAttribute('d', paths.night);
+            const dayEl = document.getElementById('day-overlay-path');
+            if (dayEl) dayEl.setAttribute('d', paths.day);
+            const lightsGroup = document.getElementById('city-lights');
+            if (lightsGroup) {
+                const circles = lightsGroup.querySelectorAll('circle');
+                circles.forEach(c => {
+                    const alt = getSolarAltitude(+c.dataset.lat, +c.dataset.lng, sub);
+                    c.setAttribute('opacity', lightOpacity(alt, +c.dataset.i).toFixed(3));
                 });
             }
         }
@@ -1659,7 +1910,6 @@ function getWorldContinents() {
             if (dLng > 180) dLng -= 360;
             if (dLng < -180) dLng += 360;
 
-            document.getElementById('loc-status').textContent = `${label} (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
             if (locationAnimId) { cancelAnimationFrame(locationAnimId); locationAnimId = null; }
 
             if (fromLat === lat && fromLng === lng && fromTzOffset === toTzOffset) {
@@ -1715,14 +1965,10 @@ function getWorldContinents() {
         }
 
         window.requestGeolocation = function() {
-            if (!navigator.geolocation) {
-                document.getElementById('loc-status').textContent = 'Geolokalizacja niedostepna w tej przegladarce';
-                return;
-            }
-            document.getElementById('loc-status').textContent = 'Pobieram lokalizacje...';
+            if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition(
                 (pos) => setLocation(pos.coords.latitude, pos.coords.longitude, 'Twoja lokalizacja', null),
-                (err) => { document.getElementById('loc-status').textContent = 'Nie udalo sie pobrac lokalizacji: ' + err.message; }
+                () => {}
             );
         };
 
@@ -1741,6 +1987,7 @@ function getWorldContinents() {
             const guide = document.getElementById('guide-panel');
             if (guide) guide.style.display = 'none';
             bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+            if (bar.style.display === 'block') bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
         window.toggleGuide = function() {
@@ -1748,6 +1995,7 @@ function getWorldContinents() {
             const bar = document.getElementById('location-bar');
             if (bar) bar.style.display = 'none';
             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if (panel.style.display === 'block') panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
         window.changeYear = function(delta) { currentYear += delta; renderYear(currentYear); };
@@ -1763,7 +2011,6 @@ function getWorldContinents() {
         };
 
         // ===== INIT =====
-        document.getElementById('loc-status').textContent = `Torun (${userLat.toFixed(2)}, ${userLng.toFixed(2)})`;
         document.getElementById('city-select').value = '53.01,18.60';
         initWorldMap();
         renderToday();
@@ -1780,6 +2027,7 @@ function getWorldContinents() {
         setInterval(() => {
             if (userLat !== null) renderWheel();
         }, 10000);
+        setInterval(updateDayNight, 60000);
     </script>
 </body>
 </html>
