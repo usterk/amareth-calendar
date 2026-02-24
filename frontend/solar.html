@@ -228,6 +228,93 @@
         .solar-info-val {
             font-family: 'Cinzel', serif; font-size: 0.9rem; color: var(--text);
         }
+
+        /* ===== GUIDE PANEL ===== */
+        .guide-panel {
+            max-width: 560px;
+            margin: 0 auto 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .guide-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-align: center;
+            padding: 1rem 1rem 0.5rem;
+            letter-spacing: 0.08em;
+        }
+        .guide-section {
+            padding: 0.7rem 1.2rem;
+            border-top: 1px solid var(--border);
+        }
+        .guide-section:last-child {
+            padding-bottom: 1rem;
+        }
+        .guide-section-head {
+            font-family: 'Cinzel', serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+            letter-spacing: 0.06em;
+        }
+        .guide-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+        .guide-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.3rem;
+        }
+        .guide-swatch {
+            width: 14px; height: 14px; border-radius: 3px;
+            flex-shrink: 0; border: 1px solid rgba(255,255,255,0.08);
+        }
+        .guide-line {
+            width: 32px; height: 0; flex-shrink: 0;
+            border-top: 2px dashed;
+        }
+        .guide-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .guide-planets {
+            display: flex; gap: 0.5rem; flex-wrap: wrap;
+            margin-top: 0.3rem;
+        }
+        .guide-planet {
+            display: flex; align-items: center; gap: 0.25rem;
+            font-size: 0.72rem; color: var(--text-muted);
+        }
+        .guide-planet-sym {
+            font-size: 0.9rem;
+        }
+        .guide-gradient-bar {
+            height: 10px; border-radius: 5px;
+            margin-bottom: 0.4rem;
+            background: linear-gradient(90deg,
+                rgb(8,10,30) 0%, rgb(20,18,55) 15%, rgb(190,105,45) 22%,
+                rgb(225,165,60) 27%, rgb(90,150,210) 35%, rgb(45,110,190) 50%,
+                rgb(90,150,210) 65%, rgb(225,165,60) 73%, rgb(190,105,45) 78%,
+                rgb(20,18,55) 85%, rgb(8,10,30) 100%);
+        }
+        .guide-clock-hint {
+            display: flex; justify-content: center; gap: 1.2rem;
+            margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);
+        }
+        .guide-clock-hint span {
+            display: flex; align-items: center; gap: 0.25rem;
+        }
+        .guide-clock-hint .dir {
+            font-size: 0.65rem; opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -242,7 +329,64 @@
             <a href="astro.html" class="theme-link" id="astro-link">✦ Astro</a>
             <span class="theme-active">☀ Solar</span>
             <button class="config-toggle" onclick="toggleConfig()">⚙ Lokalizacja</button>
+            <button class="config-toggle" onclick="toggleGuide()">&#9432; Przewodnik</button>
         </nav>
+    </div>
+
+    <div id="guide-panel" class="guide-panel" style="display:none">
+        <div class="guide-title">Przewodnik po tarczy</div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Gradient nieba</div>
+            <div class="guide-gradient-bar"></div>
+            <div class="guide-desc">Kolory tla odzwierciedlaja pore dnia: ciemny granat to noc, pomarancz to swit i zmierzch, blekit to dzien. Gradient zmienia sie plynnie w ciagu doby.</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Luki celestne</div>
+            <div class="guide-row">
+                <span class="guide-line" style="border-color: rgba(240,192,64,0.6);"></span>
+                <span class="guide-dot" style="background: #f0c040; box-shadow: 0 0 6px #f0c040;"></span>
+                <span class="guide-desc">Luk Slonca &mdash; przerywana zlota linia od wschodu do zachodu. Jasna kropka = aktualna pozycja.</span>
+            </div>
+            <div class="guide-row">
+                <span class="guide-line" style="border-color: rgba(160,170,210,0.5);"></span>
+                <span class="guide-dot" style="background: #8890b0; border: 1px solid #b4bdd4;"></span>
+                <span class="guide-desc">Luk Ksiezyca &mdash; srebrna linia z ikona fazy. Jasna strona ikony wskazuje Slonce.</span>
+            </div>
+            <div class="guide-desc" style="margin-top:0.25rem">Im blizej srodka tarczy, tym wyzej na niebie znajduje sie cialo niebieskie.</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Godziny planetarne</div>
+            <div class="guide-desc">Zewnetrzny pierscien to 24 godziny planetarne (Horae Temporales). Kazdy segment ma kolor planety rzadzacej wg porzadku Chaldejskiego:</div>
+            <div class="guide-planets">
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#f0c040">&#9737;</span> Slonce</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#c0c8d8">&#9789;</span> Ksiezyc</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#d44040">&#9794;</span> Mars</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#a080d0">&#9791;</span> Merkury</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#4080d0">&#9795;</span> Jowisz</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#40b880">&#9792;</span> Wenus</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#808080">&#9796;</span> Saturn</span>
+            </div>
+            <div class="guide-desc" style="margin-top:0.3rem">Podswietlony segment = aktualna godzina. Godziny dzienne i nocne maja rozna dlugosc (zaleznie od pory roku).</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Centrum</div>
+            <div class="guide-desc">Aktualny czas, data w kalendarzu Amareth (np. "6 Piscion") oraz symbol znaku zodiaku i planety rzadzacej biezaca godzina.</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Orientacja tarczy</div>
+            <div class="guide-clock-hint">
+                <span><b>12:00</b> <span class="dir">&#8593; gora</span></span>
+                <span><b>18:00</b> <span class="dir">&#8594; prawo</span></span>
+                <span><b>00:00</b> <span class="dir">&#8595; dol</span></span>
+                <span><b>06:00</b> <span class="dir">&#8592; lewo</span></span>
+            </div>
+            <div class="guide-desc" style="margin-top:0.3rem;text-align:center">Ruch zgodny ze wskazowkami zegara. Etykiety &#9728; i &#9789; przy lukach pokazuja czasy wschodu i zachodu.</div>
+        </div>
     </div>
 
     <div class="location-bar" id="location-bar" style="display:none">
@@ -335,6 +479,13 @@
             document.getElementById('solar-container').innerHTML =
                 '<div style="color:#f85149;text-align:center;padding:2rem">ES modules wymagaja serwera HTTP.<br>Uruchom: <code>cd frontend && python3 -m http.server 8001</code><br>i otworz <code>http://localhost:8001/solar.html</code></div>';
         }
+        // Fallback: detect if module failed to load (e.g. browser cache)
+        setTimeout(function() {
+            var c = document.getElementById('solar-container');
+            if (c && c.textContent.trim() === 'Obliczam...') {
+                c.innerHTML = '<div style="color:#f85149;text-align:center;padding:2rem">Blad ladowania modulu.<br>Sprobuj: <kbd>Ctrl+Shift+R</kbd> / <kbd>Cmd+Shift+R</kbd> (hard refresh)</div>';
+            }
+        }, 3000);
     </script>
     <script type="module">
         import {
@@ -342,6 +493,7 @@
             ELEMENT_LABELS, MODALITY_LABELS,
             getSunTimes, julianDay, sunLongitude,
             gregorianToZodiac, getPlanetaryHours, getMoonPhase,
+            getMoonTimes, getMoonAltitude,
             toAmareth, fmtAmarethYear, fmtTime,
         } from './engine.js';
 
@@ -474,7 +626,7 @@
         }
 
         // ===== BUILD SOLAR CLOCK SVG =====
-        function buildSolarClockSVG(now, sunrise, sunset, hours, currentHourIdx) {
+        function buildSolarClockSVG(now, sunrise, sunset, hours, currentHourIdx, moonData) {
             const W = 500, H = 500;
             const cx = W / 2, cy = H / 2;
 
@@ -483,7 +635,10 @@
             const R_HOUR_OUT = 240;
             const R_HOUR_IN = 205;
             const R_SKY = 200;
-            const R_PEAK = 80;
+            const R_SUN_BASE = R_SKY - 10;  // sun arc outer edge (near rim)
+            const R_SUN_PEAK = R_SKY - 85;  // sun arc peak at noon (deep, expressive arc)
+            const R_MOON_BASE = R_SKY - 30; // moon arc outer edge (well separated from sun)
+            const R_MOON_PEAK = R_SKY - 95; // moon arc peak (deeper than sun, clear separation)
             const R_CENTER = 68;
 
             const sunriseH = sunrise ? toDecimalHours(sunrise) : 6;
@@ -499,6 +654,9 @@
             s += `<defs>`;
             s += `<filter id="sunGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>`;
             s += `<filter id="softGlow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+            s += `<radialGradient id="moonBackdrop"><stop offset="0%" stop-color="rgb(6,6,15)" stop-opacity="0.55"/><stop offset="60%" stop-color="rgb(6,6,15)" stop-opacity="0.3"/><stop offset="100%" stop-color="rgb(6,6,15)" stop-opacity="0"/></radialGradient>`;
+            s += `<radialGradient id="sunBackdrop"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.45"/><stop offset="35%" stop-color="#f0c040" stop-opacity="0.2"/><stop offset="70%" stop-color="#f0c040" stop-opacity="0.08"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient>`;
+            s += `<radialGradient id="sunCore"><stop offset="0%" stop-color="#fff"/><stop offset="45%" stop-color="#ffe080"/><stop offset="100%" stop-color="#f0c040"/></radialGradient>`;
             s += `<filter id="textShadow"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter>`;
             s += `<clipPath id="skyClip"><circle cx="${cx}" cy="${cy}" r="${R_SKY}"/></clipPath>`;
             s += `</defs>`;
@@ -520,66 +678,152 @@
             s += `<circle cx="${cx}" cy="${cy}" r="${R_SKY}" fill="none" stroke="#151530" stroke-width="1"/>`;
 
             // ===== LAYER 2: HORIZON LINE =====
-            // Draw a subtle horizon line at sunrise/sunset level
             if (sunrise && sunset) {
                 const [srx, sry] = polar(cx, cy, R_SKY - 5, sunriseAngle);
                 const [ssx, ssy] = polar(cx, cy, R_SKY - 5, sunsetAngle);
-                // Arc through the night side (bottom) connecting sunrise and sunset
-                s += `<line x1="${srx}" y1="${sry}" x2="${ssx}" y2="${ssy}" stroke="rgba(200,180,140,0.15)" stroke-width="1" stroke-dasharray="4,4"/>`;
+                s += `<line x1="${srx}" y1="${sry}" x2="${ssx}" y2="${ssy}" stroke="rgba(200,180,140,0.12)" stroke-width="0.8" stroke-dasharray="4,4"/>`;
+            }
+
+            // Helper: draw a celestial arc (sun or moon style)
+            function drawArc(riseAngle, setAngle, rBase, rPeak, strokeColor, dotSize) {
+                const span = ((setAngle - riseAngle) + 360) % 360;
+                const STEPS = 80;
+                const pts = [];
+                for (let i = 0; i <= STEPS; i++) {
+                    const t = i / STEPS;
+                    const angle = (riseAngle + t * span) % 360;
+                    const elev = Math.sin(t * Math.PI);
+                    const r = rBase - elev * (rBase - rPeak);
+                    const [px, py] = polar(cx, cy, r, angle);
+                    pts.push(`${px.toFixed(1)},${py.toFixed(1)}`);
+                }
+                s += `<polyline points="${pts.join(' ')}" fill="none" stroke="${strokeColor}" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round"/>`;
+                return { span };
+            }
+
+            // Get position on an arc at fraction t [0,1]
+            function arcPos(riseAngle, span, rBase, rPeak, t) {
+                const angle = (riseAngle + t * span) % 360;
+                const elev = Math.sin(t * Math.PI);
+                const r = rBase - elev * (rBase - rPeak);
+                return { pos: polar(cx, cy, r, angle), angle };
             }
 
             // ===== LAYER 3: SUN ARC + SUN DOT =====
             if (sunrise && sunset) {
-                // Sun arc — sinusoidal path from sunrise to sunset
-                const daySpan = ((sunsetAngle - sunriseAngle) + 360) % 360;
-                const STEPS = 80;
-                const arcPoints = [];
-
-                for (let i = 0; i <= STEPS; i++) {
-                    const t = i / STEPS;
-                    const angle = (sunriseAngle + t * daySpan) % 360;
-                    const elev = Math.sin(t * Math.PI);
-                    const r = R_SKY - 10 - elev * (R_SKY - 10 - R_PEAK);
-                    const [px, py] = polar(cx, cy, r, angle);
-                    arcPoints.push(`${px.toFixed(1)},${py.toFixed(1)}`);
-                }
-
-                s += `<polyline points="${arcPoints.join(' ')}" fill="none" stroke="rgba(240,192,64,0.25)" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round"/>`;
-
-                // Small dots along the arc at hourly intervals
                 const dayLenH = ((sunsetH - sunriseH) % 24 + 24) % 24;
+                const { span: daySpan } = drawArc(sunriseAngle, sunsetAngle, R_SUN_BASE, R_SUN_PEAK, 'rgba(240,192,64,0.25)');
+
+                // Hourly dots along sun arc
                 for (let dh = 1; dh < Math.floor(dayLenH); dh++) {
-                    const t = dh / dayLenH;
-                    const angle = (sunriseAngle + t * daySpan) % 360;
-                    const elev = Math.sin(t * Math.PI);
-                    const r = R_SKY - 10 - elev * (R_SKY - 10 - R_PEAK);
-                    const [dx, dy] = polar(cx, cy, r, angle);
-                    s += `<circle cx="${dx}" cy="${dy}" r="1.5" fill="rgba(240,192,64,0.35)"/>`;
+                    const { pos: [dx, dy] } = arcPos(sunriseAngle, daySpan, R_SUN_BASE, R_SUN_PEAK, dh / dayLenH);
+                    s += `<circle cx="${dx}" cy="${dy}" r="1.5" fill="rgba(240,192,64,0.3)"/>`;
                 }
 
-                // Current sun position (handle midnight wrap)
+                // Current sun dot
                 const hSinceRise = hoursSince(sunriseH, nowH);
                 const isDaytime = hSinceRise <= dayLenH;
                 if (isDaytime) {
-                    const tNow = hSinceRise / dayLenH;
-                    const elevNow = Math.sin(tNow * Math.PI);
-                    const rNow = R_SKY - 10 - elevNow * (R_SKY - 10 - R_PEAK);
-                    const [sx, sy] = polar(cx, cy, rNow, nowAngle);
-                    // Sun glow
-                    s += `<circle cx="${sx}" cy="${sy}" r="14" fill="rgba(240,192,64,0.15)"/>`;
-                    s += `<circle cx="${sx}" cy="${sy}" r="8" fill="#f0c040" filter="url(#sunGlow)" opacity="0.9"/>`;
-                    s += `<circle cx="${sx}" cy="${sy}" r="4" fill="#fff" opacity="0.95"/>`;
-                } else {
-                    // Moon indicator at current angle (night)
-                    const nowJd = julianDay(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate(),
-                        now.getUTCHours() + now.getUTCMinutes() / 60);
-                    const moon = getMoonPhase(nowJd);
-                    const rMoon = R_SKY - 30;
-                    const [mx, my] = polar(cx, cy, rMoon, nowAngle);
-                    s += `<circle cx="${mx}" cy="${my}" r="6" fill="rgba(192,200,216,0.15)"/>`;
-                    s += `<circle cx="${mx}" cy="${my}" r="4" fill="#c0c8d8" opacity="0.7"/>`;
-                    s += `<circle cx="${mx}" cy="${my}" r="2" fill="#e0e4f0" opacity="0.9"/>`;
+                    const { pos: [sx, sy] } = arcPos(sunriseAngle, daySpan, R_SUN_BASE, R_SUN_PEAK, hSinceRise / dayLenH);
+                    s += `<circle cx="${sx}" cy="${sy}" r="24" fill="url(#sunBackdrop)"/>`;
+                    s += `<circle cx="${sx}" cy="${sy}" r="8" fill="url(#sunCore)"/>`;
                 }
+            }
+
+            // ===== LAYER 3b: MOON ARC + MOON DOT =====
+            // Compute sun XY for moon phase rotation (bright side faces sun)
+            let sunXY = [cx, cy - R_SUN_BASE]; // default: top (noon)
+            if (sunrise && sunset) {
+                const dayLenH2 = ((sunsetH - sunriseH) % 24 + 24) % 24;
+                const hSR = hoursSince(sunriseH, nowH);
+                if (hSR <= dayLenH2) {
+                    const t = hSR / dayLenH2;
+                    const el = Math.sin(t * Math.PI);
+                    const r = R_SUN_BASE - el * (R_SUN_BASE - R_SUN_PEAK);
+                    sunXY = polar(cx, cy, r, (sunriseAngle + t * (((sunsetAngle - sunriseAngle) + 360) % 360)) % 360);
+                } else {
+                    // Sun below horizon — approximate at its dial angle, outer edge
+                    sunXY = polar(cx, cy, R_SKY, nowAngle);
+                }
+            }
+
+            // Helper: draw moon phase icon at (mx, my) with rotation toward sun
+            function drawMoonPhaseIcon(mx, my) {
+                const nowJd = julianDay(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate(),
+                    now.getUTCHours() + now.getUTCMinutes() / 60);
+                const moon = getMoonPhase(nowJd);
+                const mR = 8;
+                // Rotation: bright side should face the sun
+                const rotDeg = Math.atan2(sunXY[1] - my, sunXY[0] - mx) * 180 / Math.PI;
+                // Gradient backdrop — fades out smoothly
+                s += `<circle cx="${mx}" cy="${my}" r="${mR + 6}" fill="url(#moonBackdrop)"/>`;
+                s += `<g transform="rotate(${rotDeg.toFixed(1)}, ${mx.toFixed(1)}, ${my.toFixed(1)})">`;
+                s += `<circle cx="${mx}" cy="${my}" r="${mR}" fill="#10101e" stroke="#7880a0" stroke-width="0.8"/>`;
+                const p = moon.phase;
+                const isWaxing = p < 0.5;
+                const pNorm = isWaxing ? p * 2 : (1 - p) * 2;
+                const termRx = (mR * Math.abs(Math.cos(Math.PI * pNorm))).toFixed(2);
+                // Draw illuminated portion — default: bright on RIGHT (+x), rotation aligns it toward sun
+                const top = `${mx} ${my - mR}`, bot = `${mx} ${my + mR}`;
+                const outerSweep = isWaxing ? 1 : 0;
+                const termSweep = isWaxing ? (pNorm < 0.5 ? 0 : 1) : (pNorm < 0.5 ? 1 : 0);
+                s += `<path d="M ${top} A ${mR} ${mR} 0 0 ${outerSweep} ${bot} A ${termRx} ${mR} 0 0 ${termSweep} ${top} Z" fill="#b4bdd4"/>`;
+                s += `</g>`;
+            }
+
+            if (moonData && moonData.moonrise && moonData.moonset) {
+                const mrH = toDecimalHours(moonData.moonrise);
+                const msH = toDecimalHours(moonData.moonset);
+                const mrAngle = timeToAngle(mrH);
+                const msAngle = timeToAngle(msH);
+                const moonLenH = ((msH - mrH) % 24 + 24) % 24;
+
+                // Draw arc
+                const { span: moonSpan } = drawArc(mrAngle, msAngle, R_MOON_BASE, R_MOON_PEAK, 'rgba(160,170,210,0.18)');
+
+                // Hourly dots
+                for (let dh = 1; dh < Math.floor(moonLenH); dh++) {
+                    const { pos: [dx, dy] } = arcPos(mrAngle, moonSpan, R_MOON_BASE, R_MOON_PEAK, dh / moonLenH);
+                    s += `<circle cx="${dx}" cy="${dy}" r="1.2" fill="rgba(160,170,210,0.2)"/>`;
+                }
+
+                // Moon dot (if moon is up)
+                const hSinceMR = hoursSince(mrH, nowH);
+                if (hSinceMR <= moonLenH) {
+                    const { pos: [mx, my] } = arcPos(mrAngle, moonSpan, R_MOON_BASE, R_MOON_PEAK, hSinceMR / moonLenH);
+                    drawMoonPhaseIcon(mx, my);
+                }
+            } else if (moonData && moonData.alwaysUp) {
+                // Moon never sets — draw full circle arc + dot at current time
+                const moonR = R_MOON_BASE - (R_MOON_BASE - R_MOON_PEAK) * 0.35;
+                s += `<circle cx="${cx}" cy="${cy}" r="${moonR}" fill="none" stroke="rgba(160,170,210,0.15)" stroke-width="1.2" stroke-dasharray="4,5" stroke-linecap="round"/>`;
+                // Hourly dots around the circle
+                for (let h = 0; h < 24; h += 2) {
+                    const a = timeToAngle(h);
+                    const [dx, dy] = polar(cx, cy, moonR, a);
+                    s += `<circle cx="${dx}" cy="${dy}" r="1" fill="rgba(160,170,210,0.15)"/>`;
+                }
+                const [mx, my] = polar(cx, cy, moonR, nowAngle);
+                drawMoonPhaseIcon(mx, my);
+            } else if (moonData && moonData.moonrise && !moonData.moonset) {
+                // Only moonrise found (moon rose and stays up) — partial arc from rise to now
+                const mrH = toDecimalHours(moonData.moonrise);
+                const mrAngle = timeToAngle(mrH);
+                const moonR = R_MOON_BASE - (R_MOON_BASE - R_MOON_PEAK) * 0.35;
+                // Draw arc segment from moonrise to now
+                const span = ((nowAngle - mrAngle) + 360) % 360;
+                if (span > 5) {
+                    const STEPS = 40;
+                    const pts = [];
+                    for (let i = 0; i <= STEPS; i++) {
+                        const a = (mrAngle + (i / STEPS) * span) % 360;
+                        const [px, py] = polar(cx, cy, moonR, a);
+                        pts.push(`${px.toFixed(1)},${py.toFixed(1)}`);
+                    }
+                    s += `<polyline points="${pts.join(' ')}" fill="none" stroke="rgba(160,170,210,0.15)" stroke-width="1.2" stroke-dasharray="4,5" stroke-linecap="round"/>`;
+                }
+                const [mx, my] = polar(cx, cy, moonR, nowAngle);
+                drawMoonPhaseIcon(mx, my);
             }
 
             // ===== LAYER 4: PLANETARY HOUR RING =====
@@ -664,17 +908,22 @@
                 s += `<text x="${lx}" y="${ly}" fill="${isMajor ? '#7a7498' : '#4a4468'}" font-size="${isMajor ? 10 : 8}" text-anchor="middle" dominant-baseline="central" font-family="Raleway,sans-serif" font-weight="${isMajor ? '600' : '400'}">${label}</text>`;
             }
 
-            // ===== LAYER 6: SUNRISE/SUNSET LABELS =====
+            // ===== LAYER 6: SUNRISE/SUNSET + MOONRISE/MOONSET LABELS =====
             if (sunrise && sunset) {
-                // Sunrise
-                const srLabelAngle = sunriseAngle;
-                const [srx, sry] = polar(cx, cy, R_SKY - 18, srLabelAngle);
+                const [srx, sry] = polar(cx, cy, R_SKY - 18, sunriseAngle);
                 s += `<text x="${srx}" y="${sry}" fill="#f0c040" font-size="8.5" text-anchor="middle" dominant-baseline="central" font-family="Cinzel,serif" font-weight="600" filter="url(#textShadow)">\u2600 ${fmtTime(sunrise)}</text>`;
-
-                // Sunset
-                const ssLabelAngle = sunsetAngle;
-                const [ssx, ssy] = polar(cx, cy, R_SKY - 18, ssLabelAngle);
+                const [ssx, ssy] = polar(cx, cy, R_SKY - 18, sunsetAngle);
                 s += `<text x="${ssx}" y="${ssy}" fill="#6080b0" font-size="8.5" text-anchor="middle" dominant-baseline="central" font-family="Cinzel,serif" font-weight="600" filter="url(#textShadow)">\u263D ${fmtTime(sunset)}</text>`;
+            }
+            if (moonData && moonData.moonrise) {
+                const mrAngle = timeToAngle(toDecimalHours(moonData.moonrise));
+                const [mrx, mry] = polar(cx, cy, R_SKY - 30, mrAngle);
+                s += `<text x="${mrx}" y="${mry}" fill="#8890b0" font-size="7" text-anchor="middle" dominant-baseline="central" font-family="Cinzel,serif" filter="url(#textShadow)">\u263E ${fmtTime(moonData.moonrise)}</text>`;
+            }
+            if (moonData && moonData.moonset) {
+                const msAngle = timeToAngle(toDecimalHours(moonData.moonset));
+                const [msx, msy] = polar(cx, cy, R_SKY - 30, msAngle);
+                s += `<text x="${msx}" y="${msy}" fill="#606888" font-size="7" text-anchor="middle" dominant-baseline="central" font-family="Cinzel,serif" filter="url(#textShadow)">\u263E ${fmtTime(moonData.moonset)}</text>`;
             }
 
             // ===== LAYER 7: CENTER DISPLAY =====
@@ -727,6 +976,7 @@
 
         // ===== RENDER CLOCK =====
         function renderClock() {
+          try {
             const now = new Date();
             const container = document.getElementById('solar-container');
 
@@ -775,7 +1025,8 @@
                 const tomorrow = new Date(now.getTime() + DAY_MS);
                 const stTom = getSunTimes(tomorrow, userLat, userLng);
                 if (stTom.polarDay || stTom.polarNight) {
-                    container.innerHTML = buildSolarClockSVG(now, sunrise, sunset, null, -1);
+                    const md = getMoonTimes(now, userLat, userLng);
+                    container.innerHTML = buildSolarClockSVG(now, sunrise, sunset, null, -1, md);
                     return;
                 }
                 nextSunrise = stTom.sunrise;
@@ -790,7 +1041,25 @@
                 }
             }
 
-            container.innerHTML = buildSolarClockSVG(now, sunrise, sunset, ph.hours, ci);
+            // Moon data — resolve split transits so moonrise < moonset (same transit)
+            let moonData = null;
+            try {
+                moonData = getMoonTimes(now, userLat, userLng);
+                if (moonData.moonrise && moonData.moonset &&
+                    moonData.moonset.getTime() < moonData.moonrise.getTime()) {
+                    // moonset is from a previous transit; find the actual moonset for current transit
+                    const mTomorrow = new Date(now.getTime() + DAY_MS);
+                    const mdTom = getMoonTimes(mTomorrow, userLat, userLng);
+                    moonData.moonset = mdTom.moonset || null; // tomorrow's moonset completes this transit
+                }
+            } catch(e) { console.warn('Moon calc error:', e); }
+
+            container.innerHTML = buildSolarClockSVG(now, sunrise, sunset, ph.hours, ci, moonData);
+          } catch(e) {
+            console.error('renderClock error:', e);
+            const c = document.getElementById('solar-container');
+            if (c) c.innerHTML = `<div style="color:#f85149;text-align:center;padding:2rem">Blad: ${e.message}</div>`;
+          }
         }
 
         function renderPolarWarning() {
@@ -859,6 +1128,11 @@
         window.toggleConfig = function() {
             const bar = document.getElementById('location-bar');
             bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.toggleGuide = function() {
+            const panel = document.getElementById('guide-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         };
 
         // ===== INIT =====

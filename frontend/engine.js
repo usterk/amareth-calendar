@@ -283,6 +283,83 @@ export function fmtAmarethYear(zodiacYear) {
     return `Rok ${Math.abs(a)} p.A.`;
 }
 
+// ========== MOON POSITION & TIMES ==========
+function siderealTime(d, lw) {
+    return RAD * (280.16 + 360.9856235 * d) - lw;
+}
+
+function getMoonCoords(d) {
+    const L = RAD * (218.316 + 13.176396 * d); // ecliptic longitude
+    const M = RAD * (134.963 + 13.064993 * d); // mean anomaly
+    const F = RAD * (93.272 + 13.229350 * d);  // mean distance
+
+    const l = L + RAD * 6.289 * Math.sin(M); // longitude
+    const b = RAD * 5.128 * Math.sin(F);      // latitude
+
+    return {
+        ra: Math.atan2(Math.sin(l) * Math.cos(E) - Math.tan(b) * Math.sin(E), Math.cos(l)),
+        dec: Math.asin(Math.sin(b) * Math.cos(E) + Math.cos(b) * Math.sin(E) * Math.sin(l)),
+        dist: 385001 - 20905 * Math.cos(M),
+    };
+}
+
+export function getMoonAltitude(date, lat, lng) {
+    const phi = RAD * lat;
+    const lw = RAD * -lng;
+    const d = toDays(date);
+    const moon = getMoonCoords(d);
+    const H = siderealTime(d, lw) - moon.ra;
+    const alt = Math.asin(
+        Math.sin(phi) * Math.sin(moon.dec) +
+        Math.cos(phi) * Math.cos(moon.dec) * Math.cos(H)
+    );
+    return alt / RAD; // degrees
+}
+
+/**
+ * Find moonrise and moonset for a given date and location.
+ * Scans the day in 30-min steps and bisects crossings.
+ * Returns { moonrise: Date|null, moonset: Date|null, alwaysUp: bool, alwaysDown: bool }
+ */
+export function getMoonTimes(date, lat, lng) {
+    const hc = 0.133; // moon apparent radius - refraction (~8' - 34' ≈ -0.26°, but with parallax ~0.95° → ~+0.13°)
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+
+    let prevAlt = getMoonAltitude(start, lat, lng) - hc;
+    let rise = null, set = null;
+
+    for (let i = 1; i <= 48; i++) {
+        const tPrev = new Date(start.getTime() + (i - 1) * 30 * 60000);
+        const tCurr = new Date(start.getTime() + i * 30 * 60000);
+        const alt = getMoonAltitude(tCurr, lat, lng) - hc;
+
+        if (prevAlt <= 0 && alt > 0 && !rise) {
+            rise = bisectMoonCrossing(tPrev, tCurr, lat, lng, hc);
+        } else if (prevAlt > 0 && alt <= 0 && !set) {
+            set = bisectMoonCrossing(tPrev, tCurr, lat, lng, hc);
+        }
+
+        prevAlt = alt;
+        if (rise && set) break;
+    }
+
+    const alwaysUp = !rise && !set && getMoonAltitude(start, lat, lng) > hc;
+    const alwaysDown = !rise && !set && getMoonAltitude(start, lat, lng) <= hc;
+
+    return { moonrise: rise, moonset: set, alwaysUp, alwaysDown };
+}
+
+function bisectMoonCrossing(t1, t2, lat, lng, hc) {
+    for (let i = 0; i < 14; i++) {
+        const mid = new Date((t1.getTime() + t2.getTime()) / 2);
+        const a1 = getMoonAltitude(t1, lat, lng) - hc;
+        const am = getMoonAltitude(mid, lat, lng) - hc;
+        if (a1 * am <= 0) t2 = mid; else t1 = mid;
+    }
+    return new Date((t1.getTime() + t2.getTime()) / 2);
+}
+
 // ========== MOON PHASE ==========
 // Returns { phase (0-1), illumination (0-100), name (Polish) }
 export function getMoonPhase(jd) {
