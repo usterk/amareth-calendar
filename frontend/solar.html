@@ -500,6 +500,7 @@
         // ===== STATE =====
         let userLat = 53.01, userLng = 18.60;
         let polarState = null;
+        let locationAnimId = null;
 
         const todayUTC = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
 
@@ -509,6 +510,53 @@
             const pLng = parseFloat(urlParams.get('lng'));
             if (!isNaN(pLat) && !isNaN(pLng)) { userLat = pLat; userLng = pLng; }
         }
+
+        // ===== STAR FIELD (deterministic) =====
+        function mulberry32(seed) {
+            return function() {
+                seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+                let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+                t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+        const SVG_STARS = [];
+        {
+            const rng = mulberry32(42);
+            for (let i = 0; i < 120; i++) {
+                const angle = rng() * 360;
+                const rMin = 73, rMax = 197; // R_CENTER+5 .. R_SKY-3
+                const r = Math.sqrt(rng() * (rMax * rMax - rMin * rMin) + rMin * rMin);
+                const size = 0.4 + rng() * 1.2;
+                const baseOpacity = 0.3 + rng() * 0.7;
+                SVG_STARS.push({ angle, r, size, baseOpacity });
+            }
+        }
+
+        // Pre-defined moon crater positions (normalized to mR=1)
+        // Moon surface features (normalized to mR=1, x+ = bright side in default orientation)
+        const MOON_CRATERS = [
+            // Large craters
+            { dx: 0.20,  dy: -0.35, r: 0.20, depth: 0.7 },
+            { dx: -0.25, dy: -0.10, r: 0.16, depth: 0.6 },
+            { dx: 0.35,  dy: 0.30,  r: 0.14, depth: 0.5 },
+            // Medium craters
+            { dx: -0.10, dy: 0.40,  r: 0.11, depth: 0.6 },
+            { dx: 0.05,  dy: 0.05,  r: 0.09, depth: 0.4 },
+            { dx: -0.35, dy: 0.35,  r: 0.10, depth: 0.5 },
+            { dx: 0.30,  dy: -0.10, r: 0.08, depth: 0.5 },
+            // Small craters
+            { dx: -0.15, dy: -0.40, r: 0.06, depth: 0.4 },
+            { dx: 0.40,  dy: 0.05,  r: 0.06, depth: 0.3 },
+            { dx: -0.05, dy: 0.25,  r: 0.05, depth: 0.3 },
+            { dx: 0.15,  dy: 0.15,  r: 0.05, depth: 0.3 },
+        ];
+        // Dark maria (larger, subtler features)
+        const MOON_MARIA = [
+            { dx: 0.10,  dy: -0.15, r: 0.30, opacity: 0.15 },
+            { dx: -0.15, dy: 0.20,  r: 0.25, opacity: 0.12 },
+            { dx: 0.25,  dy: 0.10,  r: 0.20, opacity: 0.10 },
+        ];
 
         // ===== TIME <-> ANGLE MAPPING =====
         // Noon (12:00) = top (0 deg), clockwise. Midnight (0:00) = bottom (180 deg).
@@ -544,11 +592,11 @@
             // Hours since sunrise [0, 24)
             const t = hoursSince(sunriseH, hour);
 
-            // Transition durations (clamped for very short days/nights)
-            const DAWN_POST = Math.min(0.5, dayLen * 0.1);
-            const DUSK_PRE  = Math.min(0.5, dayLen * 0.1);
-            const DUSK_POST = Math.min(1.0, nightLen * 0.15);
-            const DAWN_PRE  = Math.min(1.0, nightLen * 0.15);
+            // Transition durations — wider for smoother gradient
+            const DAWN_POST = Math.min(1.5, dayLen * 0.12);
+            const DUSK_PRE  = Math.min(1.5, dayLen * 0.12);
+            const DUSK_POST = Math.min(2.0, nightLen * 0.18);
+            const DAWN_PRE  = Math.min(2.0, nightLen * 0.18);
 
             const NIGHT     = { r: 8,   g: 10,  b: 30  };
             const TWILIGHT  = { r: 20,  g: 18,  b: 55  };
@@ -599,6 +647,12 @@
             const nightHalf = nightCore / 2;
             const np = nightHalf > 0 ? Math.min(1, Math.min(tFromMid, 24 - tFromMid) / nightHalf) : 0;
             return lerpColor(NIGHT, TWILIGHT, np * 0.3);
+        }
+
+        // Perceived sky brightness 0.0 (night) to ~0.4 (day) — BT.709 luminance
+        function skyBrightness(angleDeg, sunriseH, sunsetH) {
+            const col = skyColor(angleDeg, sunriseH, sunsetH);
+            return (0.2126 * col.r + 0.7152 * col.g + 0.0722 * col.b) / 255;
         }
 
         // ===== SVG HELPERS =====
@@ -657,20 +711,36 @@
             s += `<radialGradient id="moonBackdrop"><stop offset="0%" stop-color="rgb(6,6,15)" stop-opacity="0.55"/><stop offset="60%" stop-color="rgb(6,6,15)" stop-opacity="0.3"/><stop offset="100%" stop-color="rgb(6,6,15)" stop-opacity="0"/></radialGradient>`;
             s += `<radialGradient id="sunBackdrop"><stop offset="0%" stop-color="#f0c040" stop-opacity="0.45"/><stop offset="35%" stop-color="#f0c040" stop-opacity="0.2"/><stop offset="70%" stop-color="#f0c040" stop-opacity="0.08"/><stop offset="100%" stop-color="#f0c040" stop-opacity="0"/></radialGradient>`;
             s += `<radialGradient id="sunCore"><stop offset="0%" stop-color="#fff"/><stop offset="45%" stop-color="#ffe080"/><stop offset="100%" stop-color="#f0c040"/></radialGradient>`;
+            s += `<filter id="skySmooth"><feGaussianBlur stdDeviation="3"/></filter>`;
             s += `<filter id="textShadow"><feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#000" flood-opacity="0.6"/></filter>`;
             s += `<clipPath id="skyClip"><circle cx="${cx}" cy="${cy}" r="${R_SKY}"/></clipPath>`;
             s += `</defs>`;
 
             // ===== LAYER 1: SKY GRADIENT DISC =====
-            const NUM_SLICES = 90;
+            const NUM_SLICES = 180;
             const SLICE_DEG = 360 / NUM_SLICES;
             s += `<g clip-path="url(#skyClip)">`;
+            s += `<g filter="url(#skySmooth)">`;
             for (let i = 0; i < NUM_SLICES; i++) {
                 const a1 = i * SLICE_DEG;
-                const a2 = (i + 1) * SLICE_DEG + 0.5; // slight overlap to avoid gaps
+                const a2 = (i + 1) * SLICE_DEG + 0.5;
                 const midA = (a1 + a2) / 2;
                 const col = skyColor(midA, sunriseH, sunsetH);
-                s += `<path d="${wedgeFull(cx, cy, R_SKY + 2, a1, a2)}" fill="rgb(${col.r},${col.g},${col.b})"/>`;
+                // Oversized wedges so blur doesn't darken edges
+                s += `<path d="${wedgeFull(cx, cy, R_SKY + 10, a1, a2)}" fill="rgb(${col.r},${col.g},${col.b})"/>`;
+            }
+            s += `</g>`;
+            s += `</g>`;
+
+            // ===== LAYER 1b: STARS IN SKY =====
+            s += `<g clip-path="url(#skyClip)">`;
+            for (const star of SVG_STARS) {
+                const br = skyBrightness(star.angle, sunriseH, sunsetH);
+                if (br > 0.15) continue;
+                const op = star.baseOpacity * Math.max(0, 1 - br / 0.15);
+                if (op < 0.05) continue;
+                const [sx, sy] = polar(cx, cy, star.r, star.angle);
+                s += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${star.size.toFixed(1)}" fill="#fff" fill-opacity="${op.toFixed(2)}"/>`;
             }
             s += `</g>`;
 
@@ -753,22 +823,98 @@
                     now.getUTCHours() + now.getUTCMinutes() / 60);
                 const moon = getMoonPhase(nowJd);
                 const mR = 8;
-                // Rotation: bright side should face the sun
                 const rotDeg = Math.atan2(sunXY[1] - my, sunXY[0] - mx) * 180 / Math.PI;
-                // Gradient backdrop — fades out smoothly
-                s += `<circle cx="${mx}" cy="${my}" r="${mR + 6}" fill="url(#moonBackdrop)"/>`;
+                const rotRad = rotDeg * Math.PI / 180;
+
+                // Day vs night detection
+                const moonAngleDeg = (Math.atan2(my - cy, mx - cx) * 180 / Math.PI + 90 + 360) % 360;
+                const br = skyBrightness(moonAngleDeg, sunriseH, sunsetH);
+                const isDayMoon = br > 0.12;
+
+                // Dynamic colors
+                let darkFill, litFill, strokeCol, strokeW;
+                if (isDayMoon) {
+                    const skyCol = skyColor(moonAngleDeg, sunriseH, sunsetH);
+                    darkFill = `rgba(${skyCol.r},${skyCol.g},${skyCol.b},0.6)`;
+                    litFill = 'rgba(220,225,240,0.65)';
+                    strokeCol = 'rgba(180,190,210,0.4)';
+                    strokeW = 0.5;
+                } else {
+                    darkFill = '#10101e';
+                    litFill = '#d0d8ee';
+                    strokeCol = '#7880a0';
+                    strokeW = 0.8;
+                }
+
+                // Night glow — soft halo from the illuminated side (no filter, pure circles)
+                if (!isDayMoon) {
+                    // Offset glow toward bright side (rotDeg points toward sun = bright side)
+                    const glowOff = mR * 0.3;
+                    const gx = mx + Math.cos(rotRad) * glowOff;
+                    const gy = my + Math.sin(rotRad) * glowOff;
+                    s += `<circle cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" r="${mR + 12}" fill="none"/>`;
+                    s += `<circle cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" r="${mR + 10}" fill="rgba(180,190,220,0.06)"/>`;
+                    s += `<circle cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" r="${mR + 6}" fill="rgba(190,200,230,0.10)"/>`;
+                    s += `<circle cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" r="${mR + 3}" fill="rgba(200,210,240,0.12)"/>`;
+                }
+
+                // Moon body — rotated group (NO filter to avoid rect artifacts)
                 s += `<g transform="rotate(${rotDeg.toFixed(1)}, ${mx.toFixed(1)}, ${my.toFixed(1)})">`;
-                s += `<circle cx="${mx}" cy="${my}" r="${mR}" fill="#10101e" stroke="#7880a0" stroke-width="0.8"/>`;
+
+                // Clip for entire moon disc
+                s += `<clipPath id="moonDiscClip"><circle cx="${mx}" cy="${my}" r="${mR}"/></clipPath>`;
+
+                // Dark side base
+                s += `<circle cx="${mx}" cy="${my}" r="${mR}" fill="${darkFill}" stroke="${strokeCol}" stroke-width="${strokeW}"/>`;
+
+                // Phase geometry
                 const p = moon.phase;
                 const isWaxing = p < 0.5;
                 const pNorm = isWaxing ? p * 2 : (1 - p) * 2;
                 const termRx = (mR * Math.abs(Math.cos(Math.PI * pNorm))).toFixed(2);
-                // Draw illuminated portion — default: bright on RIGHT (+x), rotation aligns it toward sun
                 const top = `${mx} ${my - mR}`, bot = `${mx} ${my + mR}`;
                 const outerSweep = isWaxing ? 1 : 0;
                 const termSweep = isWaxing ? (pNorm < 0.5 ? 0 : 1) : (pNorm < 0.5 ? 1 : 0);
-                s += `<path d="M ${top} A ${mR} ${mR} 0 0 ${outerSweep} ${bot} A ${termRx} ${mR} 0 0 ${termSweep} ${top} Z" fill="#b4bdd4"/>`;
-                s += `</g>`;
+                const litPath = `M ${top} A ${mR} ${mR} 0 0 ${outerSweep} ${bot} A ${termRx} ${mR} 0 0 ${termSweep} ${top} Z`;
+
+                // Illuminated portion
+                s += `<path d="${litPath}" fill="${litFill}"/>`;
+
+                // Surface detail clipped to moon disc
+                s += `<g clip-path="url(#moonDiscClip)">`;
+
+                // Maria (dark basalt plains) — visible on lit area, very subtle
+                const mariaAlpha = isDayMoon ? 0.5 : 1.0;
+                for (const m of MOON_MARIA) {
+                    const mX = (mx + m.dx * mR).toFixed(1);
+                    const mY = (my + m.dy * mR).toFixed(1);
+                    const mRad = (m.r * mR).toFixed(1);
+                    const op = (m.opacity * mariaAlpha).toFixed(2);
+                    s += `<circle cx="${mX}" cy="${mY}" r="${mRad}" fill="rgba(40,45,70,${op})"/>`;
+                }
+
+                // Craters — darker ring + lighter center (bowl effect)
+                const cDepthMul = isDayMoon ? 0.4 : 0.8;
+                for (const c of MOON_CRATERS) {
+                    const crX = mx + c.dx * mR;
+                    const crY = my + c.dy * mR;
+                    const crR = c.r * mR;
+                    const d = c.depth * cDepthMul;
+                    // Crater shadow (darker ring)
+                    s += `<circle cx="${crX.toFixed(1)}" cy="${crY.toFixed(1)}" r="${crR.toFixed(1)}" fill="rgba(30,35,60,${(d * 0.6).toFixed(2)})" stroke="rgba(20,25,50,${(d * 0.3).toFixed(2)})" stroke-width="0.3"/>`;
+                    // Crater floor (slightly lighter)
+                    if (crR > 0.6) {
+                        s += `<circle cx="${crX.toFixed(1)}" cy="${(crY + crR * 0.15).toFixed(1)}" r="${(crR * 0.55).toFixed(1)}" fill="rgba(80,85,110,${(d * 0.25).toFixed(2)})"/>`;
+                    }
+                }
+
+                // Terminator shadow — soft gradient near the day/night boundary
+                // Slightly darken the area near the terminator for depth
+                const termX = mx + (isWaxing ? -1 : 1) * mR * 0.15;
+                s += `<ellipse cx="${termX.toFixed(1)}" cy="${my}" rx="${(mR * 0.3).toFixed(1)}" ry="${mR}" fill="rgba(10,12,30,0.12)"/>`;
+
+                s += `</g>`; // end moonDiscClip group
+                s += `</g>`; // end rotation group
             }
 
             if (moonData && moonData.moonrise && moonData.moonset) {
@@ -1086,13 +1232,61 @@
         }
 
         function setLocation(lat, lng, label) {
-            userLat = lat;
-            userLng = lng;
+            const fromLat = userLat;
+            const fromLng = userLng;
+
+            // Shortest-path longitude (handle wrap at ±180)
+            let dLng = lng - fromLng;
+            if (dLng > 180) dLng -= 360;
+            if (dLng < -180) dLng += 360;
+
+            // Update UI immediately
             document.getElementById('loc-status').textContent = `${label} (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
             document.getElementById('lat-input').value = lat.toFixed(2);
             document.getElementById('lng-input').value = lng.toFixed(2);
-            updateThemeLinks();
-            renderClock();
+
+            // Cancel any ongoing animation
+            if (locationAnimId) { cancelAnimationFrame(locationAnimId); locationAnimId = null; }
+
+            // Skip animation if first load or coordinates identical
+            if (fromLat === lat && fromLng === lng) {
+                updateThemeLinks();
+                renderClock();
+                return;
+            }
+
+            const DURATION = 5000; // ms
+            const startTime = performance.now();
+
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / DURATION, 1);
+                const e = easeInOutCubic(progress);
+
+                userLat = fromLat + (lat - fromLat) * e;
+                let animLng = fromLng + dLng * e;
+                // Normalise to [-180, 180]
+                if (animLng > 180) animLng -= 360;
+                if (animLng < -180) animLng += 360;
+                userLng = animLng;
+
+                renderClock();
+
+                if (progress < 1) {
+                    locationAnimId = requestAnimationFrame(animate);
+                } else {
+                    locationAnimId = null;
+                    userLat = lat;
+                    userLng = lng;
+                    updateThemeLinks();
+                }
+            }
+
+            locationAnimId = requestAnimationFrame(animate);
         }
 
         window.requestGeolocation = function() {
