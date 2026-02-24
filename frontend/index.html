@@ -189,21 +189,21 @@
             display: block;
         }
         .continents path {
-            fill: #151530;
-            stroke: #2a2a55;
+            fill: #252545;
+            stroke: #3a3a65;
             stroke-width: 0.8;
             transition: fill 0.2s;
             pointer-events: all;
         }
         .continents path:hover {
-            fill: #1e1e40;
+            fill: #2e2e50;
         }
         .map-grid line {
-            stroke: #1a1a35;
+            stroke: #222244;
             stroke-width: 0.3;
         }
         .map-grid line.equator {
-            stroke: #2a2a50;
+            stroke: #333360;
             stroke-width: 0.5;
         }
         .map-cities circle {
@@ -394,6 +394,8 @@
                     <option value="41.88,-87.63" data-tz="America/Chicago">Chicago</option>
                     <option value="43.65,-79.38" data-tz="America/Toronto">Toronto</option>
                     <option value="19.43,-99.13" data-tz="America/Mexico_City">Meksyk</option>
+                    <option value="61.22,-149.90" data-tz="America/Anchorage">Anchorage</option>
+                    <option value="64.84,-147.72" data-tz="America/Anchorage">Fairbanks</option>
                 </optgroup>
                 <optgroup label="Ameryka Pd.">
                     <option value="-23.55,-46.63" data-tz="America/Sao_Paulo">Sao Paulo</option>
@@ -423,6 +425,8 @@
                 <optgroup label="Oceania">
                     <option value="-33.87,151.21" data-tz="Australia/Sydney">Sydney</option>
                     <option value="-36.85,174.76" data-tz="Pacific/Auckland">Auckland</option>
+                    <option value="-41.29,174.78" data-tz="Pacific/Auckland">Wellington</option>
+                    <option value="-43.53,172.64" data-tz="Pacific/Auckland">Christchurch</option>
                 </optgroup>
                 <optgroup label="Arktyka/Antarktyka">
                     <option value="78.22,15.64" data-tz="Arctic/Longyearbyen">Longyearbyen (Svalbard)</option>
@@ -836,12 +840,12 @@ function getWorldContinents() {
         }
 
         const MAP_CITIES = [
-            { name: 'Warszawa', lat: 52.23, lng: 21.01, tz: 'Europe/Warsaw', label: true },
+            { name: 'Warszawa', lat: 52.23, lng: 21.01, tz: 'Europe/Warsaw' },
             { name: 'Krakow', lat: 50.06, lng: 19.94, tz: 'Europe/Warsaw' },
             { name: 'Wroclaw', lat: 51.11, lng: 17.04, tz: 'Europe/Warsaw' },
             { name: 'Gdansk', lat: 54.35, lng: 18.65, tz: 'Europe/Warsaw' },
             { name: 'Torun', lat: 53.01, lng: 18.60, tz: 'Europe/Warsaw' },
-            { name: 'Londyn', lat: 51.51, lng: -0.13, tz: 'Europe/London', label: true },
+            { name: 'Londyn', lat: 51.51, lng: -0.13, tz: 'Europe/London' },
             { name: 'Paryz', lat: 48.86, lng: 2.35, tz: 'Europe/Paris' },
             { name: 'Berlin', lat: 52.52, lng: 13.41, tz: 'Europe/Berlin' },
             { name: 'Rzym', lat: 41.90, lng: 12.50, tz: 'Europe/Rome' },
@@ -852,34 +856,38 @@ function getWorldContinents() {
             { name: 'Lizbona', lat: 38.72, lng: -9.14, tz: 'Europe/Lisbon' },
             { name: 'Ateny', lat: 37.98, lng: 23.73, tz: 'Europe/Athens' },
             { name: 'Kijow', lat: 50.45, lng: 30.52, tz: 'Europe/Kyiv' },
-            { name: 'Moskwa', lat: 55.76, lng: 37.62, tz: 'Europe/Moscow', label: true },
+            { name: 'Moskwa', lat: 55.76, lng: 37.62, tz: 'Europe/Moscow' },
             { name: 'Stambu\u0142', lat: 41.01, lng: 28.98, tz: 'Europe/Istanbul' },
-            { name: 'Nowy Jork', lat: 40.71, lng: -74.01, tz: 'America/New_York', label: true },
-            { name: 'Los Angeles', lat: 34.05, lng: -118.24, tz: 'America/Los_Angeles', label: true },
+            { name: 'Nowy Jork', lat: 40.71, lng: -74.01, tz: 'America/New_York' },
+            { name: 'Los Angeles', lat: 34.05, lng: -118.24, tz: 'America/Los_Angeles' },
             { name: 'Chicago', lat: 41.88, lng: -87.63, tz: 'America/Chicago' },
             { name: 'Toronto', lat: 43.65, lng: -79.38, tz: 'America/Toronto' },
-            { name: 'Meksyk', lat: 19.43, lng: -99.13, tz: 'America/Mexico_City', label: true },
-            { name: 'Sao Paulo', lat: -23.55, lng: -46.63, tz: 'America/Sao_Paulo', label: true },
+            { name: 'Meksyk', lat: 19.43, lng: -99.13, tz: 'America/Mexico_City' },
+            { name: 'Sao Paulo', lat: -23.55, lng: -46.63, tz: 'America/Sao_Paulo' },
             { name: 'Buenos Aires', lat: -34.60, lng: -58.38, tz: 'America/Argentina/Buenos_Aires' },
             { name: 'Lima', lat: -12.05, lng: -77.04, tz: 'America/Lima' },
             { name: 'Bogota', lat: 4.71, lng: -74.07, tz: 'America/Bogota' },
-            { name: 'Tokio', lat: 35.68, lng: 139.69, tz: 'Asia/Tokyo', label: true },
+            { name: 'Tokio', lat: 35.68, lng: 139.69, tz: 'Asia/Tokyo' },
             { name: 'Seul', lat: 37.57, lng: 126.98, tz: 'Asia/Seoul' },
-            { name: 'Pekin', lat: 39.90, lng: 116.40, tz: 'Asia/Shanghai', label: true },
+            { name: 'Pekin', lat: 39.90, lng: 116.40, tz: 'Asia/Shanghai' },
             { name: 'Szanghaj', lat: 31.23, lng: 121.47, tz: 'Asia/Shanghai' },
             { name: 'Hongkong', lat: 22.32, lng: 114.17, tz: 'Asia/Hong_Kong' },
             { name: 'Singapur', lat: 1.35, lng: 103.82, tz: 'Asia/Singapore' },
             { name: 'Bangkok', lat: 13.76, lng: 100.50, tz: 'Asia/Bangkok' },
-            { name: 'Delhi', lat: 28.61, lng: 77.21, tz: 'Asia/Kolkata', label: true },
+            { name: 'Delhi', lat: 28.61, lng: 77.21, tz: 'Asia/Kolkata' },
             { name: 'Mumbaj', lat: 19.08, lng: 72.88, tz: 'Asia/Kolkata' },
-            { name: 'Dubaj', lat: 25.20, lng: 55.27, tz: 'Asia/Dubai', label: true },
+            { name: 'Dubaj', lat: 25.20, lng: 55.27, tz: 'Asia/Dubai' },
             { name: 'Jerozolima', lat: 31.77, lng: 35.23, tz: 'Asia/Jerusalem' },
-            { name: 'Kair', lat: 30.04, lng: 31.24, tz: 'Africa/Cairo', label: true },
+            { name: 'Kair', lat: 30.04, lng: 31.24, tz: 'Africa/Cairo' },
             { name: 'Kapsztad', lat: -33.93, lng: 18.42, tz: 'Africa/Johannesburg' },
             { name: 'Nairobi', lat: -1.29, lng: 36.82, tz: 'Africa/Nairobi' },
             { name: 'Lagos', lat: 6.52, lng: 3.38, tz: 'Africa/Lagos' },
-            { name: 'Sydney', lat: -33.87, lng: 151.21, tz: 'Australia/Sydney', label: true },
+            { name: 'Sydney', lat: -33.87, lng: 151.21, tz: 'Australia/Sydney' },
             { name: 'Auckland', lat: -36.85, lng: 174.76, tz: 'Pacific/Auckland' },
+            { name: 'Wellington', lat: -41.29, lng: 174.78, tz: 'Pacific/Auckland' },
+            { name: 'Christchurch', lat: -43.53, lng: 172.64, tz: 'Pacific/Auckland' },
+            { name: 'Anchorage', lat: 61.22, lng: -149.90, tz: 'America/Anchorage' },
+            { name: 'Fairbanks', lat: 64.84, lng: -147.72, tz: 'America/Anchorage' },
             { name: 'Longyearbyen', lat: 78.22, lng: 15.64, tz: 'Arctic/Longyearbyen' },
             { name: 'Reykjavik', lat: 64.14, lng: -21.90, tz: 'Atlantic/Reykjavik' },
             { name: 'Tromso', lat: 69.65, lng: 18.96, tz: 'Europe/Oslo' },
@@ -901,9 +909,10 @@ function getWorldContinents() {
             svg += '<radialGradient id="markerGlow"><stop offset="0%" stop-color="#c8a84e" stop-opacity="0.6"/><stop offset="100%" stop-color="#c8a84e" stop-opacity="0"/></radialGradient>';
             svg += '<filter id="markerBlur"><feGaussianBlur stdDeviation="1.5"/></filter>';
             svg += '<filter id="terminatorBlur"><feGaussianBlur stdDeviation="4"/></filter>';
+            svg += '<filter id="goldenGlow"><feGaussianBlur stdDeviation="3"/></filter>';
             svg += '<filter id="lightGlow"><feGaussianBlur stdDeviation="1.2"/></filter>';
             svg += '</defs>';
-            svg += '<rect width="720" height="360" fill="#080818"/>';
+            svg += '<rect width="720" height="360" fill="#141428"/>';
             svg += '<g class="map-grid">';
             for (let lng = -150; lng <= 180; lng += 30) {
                 const x = (lng + 180) * 2;
@@ -919,9 +928,11 @@ function getWorldContinents() {
                 svg += `<path id="cont-${c.id}" d="${c.d}"/>`;
             }
             svg += '</g>';
-            // Night overlay
-            svg += '<path id="day-overlay-path" d="" fill="rgba(120,140,200,0.12)" filter="url(#terminatorBlur)" style="pointer-events:none"/>';
-            svg += '<path id="night-overlay-path" d="" fill="rgba(0,2,18,0.55)" filter="url(#terminatorBlur)" style="pointer-events:none"/>';
+            // Twilight gradient bands
+            for (const band of TWILIGHT_BANDS) {
+                const filterAttr = band.filter ? ` filter="${band.filter}"` : '';
+                svg += `<path id="${band.id}" d="" fill="${band.fill}"${filterAttr} style="pointer-events:none"/>`;
+            }
             // City lights
             svg += '<g id="city-lights" filter="url(#lightGlow)" style="pointer-events:none">';
             for (const l of CITY_LIGHTS) {
@@ -1074,6 +1085,9 @@ function getWorldContinents() {
             {lat:29.8,lng:-95.4,i:0.7,s:1.8},{lat:32.8,lng:-96.8,i:0.6,s:1.5},
             {lat:30.3,lng:-97.7,i:0.5,s:1.3},{lat:29.4,lng:-98.5,i:0.5,s:1.3},
             {lat:35.5,lng:-97.5,i:0.4,s:1.2},{lat:32.4,lng:-110.9,i:0.3,s:1.0},
+            // Alaska
+            {lat:61.2,lng:-149.9,i:0.4,s:1.2},{lat:64.8,lng:-147.7,i:0.3,s:1.0},
+            {lat:58.3,lng:-134.4,i:0.2,s:0.8},
             // Canada
             {lat:51.0,lng:-114.1,i:0.4,s:1.2},{lat:53.5,lng:-113.5,i:0.4,s:1.2},{lat:49.3,lng:-123.1,i:0.5,s:1.3},
             {lat:45.4,lng:-75.7,i:0.5,s:1.3},{lat:43.3,lng:-79.8,i:0.4,s:1.2},
@@ -1232,31 +1246,47 @@ function getWorldContinents() {
             ) / RAD;
         }
 
-        function getNightPath(sub) {
-            const declR = sub.lat * RAD;
+        const TWILIGHT_BANDS = [
+            { id: 'twi-6',   altDeg:   6,     fill: 'rgba(0,0,0,0.04)',  filter: null },
+            { id: 'twi-0',   altDeg:   0,     fill: 'rgba(0,0,0,0.06)',  filter: null },
+            { id: 'twi-r',   altDeg:  -0.833, fill: 'rgba(0,0,0,0.06)', filter: 'url(#goldenGlow)' },
+            { id: 'twi-6n',  altDeg:  -6,     fill: 'rgba(0,0,0,0.10)',  filter: 'url(#terminatorBlur)' },
+            { id: 'twi-12n', altDeg: -12,     fill: 'rgba(0,0,0,0.18)',  filter: 'url(#terminatorBlur)' },
+            { id: 'twi-18n', altDeg: -18,     fill: 'rgba(0,0,0,0.22)',  filter: 'url(#terminatorBlur)' },
+        ];
+
+        function getAltitudeContourPath(sub, altDeg) {
+            const effDecl = Math.abs(sub.lat) < 0.1 ? 0.1 : sub.lat;
+            const effDeclR = effDecl * RAD;
+            const sinA = Math.sin(altDeg * RAD);
+            const sign = effDecl >= 0 ? -1 : 1;
+            const sinD = Math.sin(effDeclR), cosD = Math.cos(effDeclR);
             const pts = [];
             for (let lng = -180; lng <= 180; lng += 2) {
                 const H = (lng - sub.lng) * RAD;
+                const cosH = Math.cos(H);
+                const R = Math.sqrt(sinD * sinD + cosD * cosD * cosH * cosH);
                 let lat;
-                if (Math.abs(sub.lat) < 0.1) {
-                    lat = Math.atan(-Math.cos(H) / Math.tan(0.1 * RAD)) / RAD;
+                if (R < 1e-9) {
+                    lat = 0;
+                } else if (sinA / R > 1) {
+                    lat = (effDecl >= 0) ? 90 : -90;
+                } else if (sinA / R < -1) {
+                    lat = (effDecl >= 0) ? -90 : 90;
                 } else {
-                    lat = Math.atan(-Math.cos(H) / Math.tan(declR)) / RAD;
+                    const alpha = Math.atan2(sinD, cosD * cosH);
+                    lat = (alpha + sign * Math.acos(sinA / R)) / RAD;
+                    lat = Math.max(-90, Math.min(90, lat));
                 }
-                lat = Math.max(-90, Math.min(90, lat));
                 const [x, y] = latLngToMapXY(lat, lng);
                 pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
             }
             const line = 'M' + pts.join(' L');
-            let night, day;
-            if (sub.lat >= 0) {
-                night = line + ' L720,360 L0,360 Z';
-                day = line + ' L720,0 L0,0 Z';
+            if (effDecl >= 0) {
+                return line + ' L720,360 L0,360 Z';
             } else {
-                night = line + ' L720,0 L0,0 Z';
-                day = line + ' L720,360 L0,360 Z';
+                return line + ' L720,0 L0,0 Z';
             }
-            return { night, day };
         }
 
         function lightOpacity(solarAlt, baseI) {
@@ -1272,11 +1302,10 @@ function getWorldContinents() {
         function updateDayNight() {
             const now = new Date();
             const sub = getSubsolarPoint(now);
-            const paths = getNightPath(sub);
-            const nightEl = document.getElementById('night-overlay-path');
-            if (nightEl) nightEl.setAttribute('d', paths.night);
-            const dayEl = document.getElementById('day-overlay-path');
-            if (dayEl) dayEl.setAttribute('d', paths.day);
+            for (const band of TWILIGHT_BANDS) {
+                const el = document.getElementById(band.id);
+                if (el) el.setAttribute('d', getAltitudeContourPath(sub, band.altDeg));
+            }
             const lightsGroup = document.getElementById('city-lights');
             if (lightsGroup) {
                 const circles = lightsGroup.querySelectorAll('circle');
