@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amaréth Calendar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #0d1117;
@@ -24,6 +25,9 @@
             --jupiter: #4080d0;
             --venus: #40b880;
             --saturn: #808080;
+            --border-glow: #30363d;
+            --glow: #6a4fd4;
+            --glow-light: #9b7aff;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -36,13 +40,93 @@
         .header { text-align: center; margin-bottom: 1.5rem; }
         .header h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.25rem; }
         .header .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem; }
-        .theme-nav { display: flex; justify-content: center; gap: 0.25rem; }
+        .theme-nav { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+        .theme-nav-row { display: flex; justify-content: center; gap: 0.25rem; }
         .theme-nav .theme-active, .theme-nav .theme-link {
             padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; text-decoration: none;
         }
         .theme-nav .theme-active { background: var(--accent); color: var(--bg); font-weight: 600; }
         .theme-nav .theme-link { border: 1px solid var(--border); color: var(--text-muted); }
         .theme-nav .theme-link:hover { border-color: var(--accent); color: var(--text); }
+
+        /* Config toggle */
+        .config-toggle {
+            background: none; border: 1px solid var(--border);
+            color: var(--text-muted); padding: 0.25rem 0.6rem;
+            border-radius: 20px; font-size: 0.78rem; cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .config-toggle:hover { border-color: var(--accent); color: var(--text); }
+
+        /* ===== GUIDE PANEL ===== */
+        .guide-panel {
+            max-width: 560px;
+            margin: 0 auto 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .guide-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-align: center;
+            padding: 1rem 1rem 0.5rem;
+            letter-spacing: 0.08em;
+        }
+        .guide-section {
+            padding: 0.7rem 1.2rem;
+            border-top: 1px solid var(--border);
+        }
+        .guide-section:last-child {
+            padding-bottom: 1rem;
+        }
+        .guide-section-head {
+            font-family: 'Cinzel', serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+            letter-spacing: 0.06em;
+        }
+        .guide-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+        .guide-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.3rem;
+        }
+        .guide-swatch {
+            width: 14px; height: 14px; border-radius: 3px;
+            flex-shrink: 0; border: 1px solid rgba(255,255,255,0.08);
+        }
+        .guide-planets {
+            display: flex; gap: 0.5rem; flex-wrap: wrap;
+            margin-top: 0.3rem;
+        }
+        .guide-planet {
+            display: flex; align-items: center; gap: 0.25rem;
+            font-size: 0.72rem; color: var(--text-muted);
+        }
+        .guide-planet-sym {
+            font-size: 0.9rem;
+        }
+        .guide-clock-hint {
+            display: flex; justify-content: center; gap: 1.2rem;
+            margin-top: 0.3rem; font-size: 0.72rem; color: var(--text-muted);
+        }
+        .guide-clock-hint span {
+            display: flex; align-items: center; gap: 0.25rem;
+        }
+        .guide-clock-hint .dir {
+            font-size: 0.65rem; opacity: 0.6;
+        }
 
         /* Location bar */
         .location-bar {
@@ -73,15 +157,6 @@
             border: 1px solid var(--border);
             color: var(--text);
         }
-        .location-bar input {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 0.45rem 0.6rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            width: 90px;
-        }
         .location-bar select {
             background: var(--bg);
             border: 1px solid var(--border);
@@ -94,14 +169,76 @@
         }
         .location-bar select optgroup { color: var(--accent); }
         .location-bar select option { color: var(--text); background: var(--bg); }
-        .location-bar .loc-label {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
         .location-bar .loc-status {
             color: var(--text-muted);
             font-size: 0.8rem;
             margin-top: 0.5rem;
+        }
+
+        /* ===== WORLD MAP ===== */
+        .world-map-container {
+            margin-bottom: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: crosshair;
+            transition: border-color 0.3s;
+            line-height: 0;
+        }
+        .world-map-container:hover {
+            border-color: var(--border-glow);
+        }
+        .world-map-container svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .continents path {
+            fill: #151530;
+            stroke: #2a2a55;
+            stroke-width: 0.8;
+            transition: fill 0.2s;
+            pointer-events: all;
+        }
+        .continents path:hover {
+            fill: #1e1e40;
+        }
+        .map-grid line {
+            stroke: #1a1a35;
+            stroke-width: 0.3;
+        }
+        .map-grid line.equator {
+            stroke: #2a2a50;
+            stroke-width: 0.5;
+        }
+        .map-cities circle {
+            fill: var(--text-muted);
+            opacity: 0.5;
+        }
+        .map-cities text {
+            font-family: 'Raleway', sans-serif;
+            font-size: 6px;
+            fill: var(--text-muted);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        @keyframes markerPulse {
+            0%, 100% { r: 12; opacity: 0.3; }
+            50% { r: 18; opacity: 0.1; }
+        }
+        .map-marker .pulse {
+            fill: var(--accent);
+            animation: markerPulse 2s ease-in-out infinite;
+        }
+        .map-tooltip {
+            font-family: 'Raleway', sans-serif;
+            font-size: 7px;
+            fill: var(--text);
+            pointer-events: none;
+        }
+        .map-tooltip rect {
+            fill: rgba(6,6,15,0.85);
+            rx: 3;
         }
 
         /* Polar warning */
@@ -216,89 +353,138 @@
         <h1>Amaréth Calendar</h1>
         <div class="subtitle">Horae Temporales</div>
         <nav class="theme-nav">
-            <span class="theme-active">Klasyczny</span>
-            <a href="astro.html" class="theme-link" id="astro-link">✦ Astro</a>
-            <a href="solar.html" class="theme-link" id="solar-link">☀ Solar</a>
+            <div class="theme-nav-row">
+                <span class="theme-active">Klasyczny</span>
+                <a href="astro.html" class="theme-link" id="astro-link">✦ Astro</a>
+                <a href="solar.html" class="theme-link" id="solar-link">☀ Solar</a>
+            </div>
+            <div class="theme-nav-row">
+                <button class="config-toggle" onclick="toggleConfig()">⚙ Lokalizacja</button>
+                <button class="config-toggle" onclick="toggleGuide()">&#9432; Przewodnik</button>
+            </div>
         </nav>
     </div>
 
-    <div class="location-bar" id="location-bar">
+    <div class="location-bar" id="location-bar" style="display:none">
         <div class="loc-row">
             <button onclick="requestGeolocation()">Moja lokalizacja</button>
-            <span class="loc-label">lub:</span>
             <select id="city-select" onchange="selectCity(this.value)">
                 <option value="">-- Wybierz miasto --</option>
                 <optgroup label="Polska">
-                    <option value="52.23,21.01">Warszawa</option>
-                    <option value="50.06,19.94">Krakow</option>
-                    <option value="51.11,17.04">Wroclaw</option>
-                    <option value="54.35,18.65">Gdansk</option>
-                    <option value="53.01,18.60">Torun</option>
+                    <option value="52.23,21.01" data-tz="Europe/Warsaw">Warszawa</option>
+                    <option value="50.06,19.94" data-tz="Europe/Warsaw">Krakow</option>
+                    <option value="51.11,17.04" data-tz="Europe/Warsaw">Wroclaw</option>
+                    <option value="54.35,18.65" data-tz="Europe/Warsaw">Gdansk</option>
+                    <option value="53.01,18.60" data-tz="Europe/Warsaw">Torun</option>
                 </optgroup>
                 <optgroup label="Europa">
-                    <option value="51.51,-0.13">Londyn</option>
-                    <option value="48.86,2.35">Paryz</option>
-                    <option value="52.52,13.41">Berlin</option>
-                    <option value="41.90,12.50">Rzym</option>
-                    <option value="40.42,-3.70">Madryt</option>
-                    <option value="59.33,18.07">Sztokholm</option>
-                    <option value="55.68,12.57">Kopenhaga</option>
-                    <option value="60.17,24.94">Helsinki</option>
-                    <option value="38.72,-9.14">Lizbona</option>
-                    <option value="37.98,23.73">Ateny</option>
-                    <option value="50.45,30.52">Kijow</option>
-                    <option value="55.76,37.62">Moskwa</option>
-                    <option value="41.01,28.98">Stambuł</option>
+                    <option value="51.51,-0.13" data-tz="Europe/London">Londyn</option>
+                    <option value="48.86,2.35" data-tz="Europe/Paris">Paryz</option>
+                    <option value="52.52,13.41" data-tz="Europe/Berlin">Berlin</option>
+                    <option value="41.90,12.50" data-tz="Europe/Rome">Rzym</option>
+                    <option value="40.42,-3.70" data-tz="Europe/Madrid">Madryt</option>
+                    <option value="59.33,18.07" data-tz="Europe/Stockholm">Sztokholm</option>
+                    <option value="55.68,12.57" data-tz="Europe/Copenhagen">Kopenhaga</option>
+                    <option value="60.17,24.94" data-tz="Europe/Helsinki">Helsinki</option>
+                    <option value="38.72,-9.14" data-tz="Europe/Lisbon">Lizbona</option>
+                    <option value="37.98,23.73" data-tz="Europe/Athens">Ateny</option>
+                    <option value="50.45,30.52" data-tz="Europe/Kyiv">Kijow</option>
+                    <option value="55.76,37.62" data-tz="Europe/Moscow">Moskwa</option>
+                    <option value="41.01,28.98" data-tz="Europe/Istanbul">Stambuł</option>
                 </optgroup>
                 <optgroup label="Ameryka Pn.">
-                    <option value="40.71,-74.01">Nowy Jork</option>
-                    <option value="34.05,-118.24">Los Angeles</option>
-                    <option value="41.88,-87.63">Chicago</option>
-                    <option value="43.65,-79.38">Toronto</option>
-                    <option value="19.43,-99.13">Meksyk</option>
+                    <option value="40.71,-74.01" data-tz="America/New_York">Nowy Jork</option>
+                    <option value="34.05,-118.24" data-tz="America/Los_Angeles">Los Angeles</option>
+                    <option value="41.88,-87.63" data-tz="America/Chicago">Chicago</option>
+                    <option value="43.65,-79.38" data-tz="America/Toronto">Toronto</option>
+                    <option value="19.43,-99.13" data-tz="America/Mexico_City">Meksyk</option>
                 </optgroup>
                 <optgroup label="Ameryka Pd.">
-                    <option value="-23.55,-46.63">Sao Paulo</option>
-                    <option value="-34.60,-58.38">Buenos Aires</option>
-                    <option value="-12.05,-77.04">Lima</option>
-                    <option value="4.71,-74.07">Bogota</option>
+                    <option value="-23.55,-46.63" data-tz="America/Sao_Paulo">Sao Paulo</option>
+                    <option value="-34.60,-58.38" data-tz="America/Argentina/Buenos_Aires">Buenos Aires</option>
+                    <option value="-12.05,-77.04" data-tz="America/Lima">Lima</option>
+                    <option value="4.71,-74.07" data-tz="America/Bogota">Bogota</option>
                 </optgroup>
                 <optgroup label="Azja">
-                    <option value="35.68,139.69">Tokio</option>
-                    <option value="37.57,126.98">Seul</option>
-                    <option value="39.90,116.40">Pekin</option>
-                    <option value="31.23,121.47">Szanghaj</option>
-                    <option value="22.32,114.17">Hongkong</option>
-                    <option value="1.35,103.82">Singapur</option>
-                    <option value="13.76,100.50">Bangkok</option>
-                    <option value="28.61,77.21">Delhi</option>
-                    <option value="19.08,72.88">Mumbaj</option>
-                    <option value="25.20,55.27">Dubaj</option>
-                    <option value="31.77,35.23">Jerozolima</option>
+                    <option value="35.68,139.69" data-tz="Asia/Tokyo">Tokio</option>
+                    <option value="37.57,126.98" data-tz="Asia/Seoul">Seul</option>
+                    <option value="39.90,116.40" data-tz="Asia/Shanghai">Pekin</option>
+                    <option value="31.23,121.47" data-tz="Asia/Shanghai">Szanghaj</option>
+                    <option value="22.32,114.17" data-tz="Asia/Hong_Kong">Hongkong</option>
+                    <option value="1.35,103.82" data-tz="Asia/Singapore">Singapur</option>
+                    <option value="13.76,100.50" data-tz="Asia/Bangkok">Bangkok</option>
+                    <option value="28.61,77.21" data-tz="Asia/Kolkata">Delhi</option>
+                    <option value="19.08,72.88" data-tz="Asia/Kolkata">Mumbaj</option>
+                    <option value="25.20,55.27" data-tz="Asia/Dubai">Dubaj</option>
+                    <option value="31.77,35.23" data-tz="Asia/Jerusalem">Jerozolima</option>
                 </optgroup>
                 <optgroup label="Afryka">
-                    <option value="30.04,31.24">Kair</option>
-                    <option value="-33.93,18.42">Kapsztad</option>
-                    <option value="-1.29,36.82">Nairobi</option>
-                    <option value="6.52,3.38">Lagos</option>
+                    <option value="30.04,31.24" data-tz="Africa/Cairo">Kair</option>
+                    <option value="-33.93,18.42" data-tz="Africa/Johannesburg">Kapsztad</option>
+                    <option value="-1.29,36.82" data-tz="Africa/Nairobi">Nairobi</option>
+                    <option value="6.52,3.38" data-tz="Africa/Lagos">Lagos</option>
                 </optgroup>
                 <optgroup label="Oceania">
-                    <option value="-33.87,151.21">Sydney</option>
-                    <option value="-36.85,174.76">Auckland</option>
+                    <option value="-33.87,151.21" data-tz="Australia/Sydney">Sydney</option>
+                    <option value="-36.85,174.76" data-tz="Pacific/Auckland">Auckland</option>
                 </optgroup>
                 <optgroup label="Arktyka/Antarktyka">
-                    <option value="78.22,15.64">Longyearbyen (Svalbard)</option>
-                    <option value="64.14,-21.90">Reykjavik</option>
-                    <option value="69.65,18.96">Tromso</option>
+                    <option value="78.22,15.64" data-tz="Arctic/Longyearbyen">Longyearbyen (Svalbard)</option>
+                    <option value="64.14,-21.90" data-tz="Atlantic/Reykjavik">Reykjavik</option>
+                    <option value="69.65,18.96" data-tz="Europe/Oslo">Tromso</option>
                 </optgroup>
             </select>
         </div>
-        <div class="loc-row" style="margin-top:0.4rem">
-            <input type="number" id="lat-input" placeholder="szer. geog." step="0.01" min="-90" max="90">
-            <input type="number" id="lng-input" placeholder="dl. geog." step="0.01" min="-180" max="180">
-            <button class="secondary" onclick="setManualLocation()">Ustaw</button>
-        </div>
+        <div class="world-map-container" id="world-map-container"></div>
         <div class="loc-status" id="loc-status">Podaj lokalizacje aby obliczyc godziny planetarne i wschody/zachody Slonca</div>
+    </div>
+
+    <div id="guide-panel" class="guide-panel" style="display:none">
+        <div class="guide-title">Przewodnik po widoku Klasycznym</div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Rok zodiakowy</div>
+            <div class="guide-desc">Rok w kalendarzu Amareth zaczyna sie od momentu gdy Slonce wchodzi w znak Barana (rownoc wiosenna, ok. 20 marca). 12 miesiecy odpowiada 12 znakom zodiaku. Kazdy miesiac trwa tyle dni, ile Slonce przebywa w danym znaku (29-32 dni).</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Karty miesiecy</div>
+            <div class="guide-desc">Kazda karta pokazuje: naglowek z symbolem i nazwa znaku, liczbe dni, date poczatku (gregorianska) oraz siatke dni. Aktualny miesiac jest podswietlony.</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Siatka dni</div>
+            <div class="guide-desc">Uklad tygodniowy Pn-Nd. Dzisiejszy dzien jest podswietlony kolorem. Puste komorki na poczatku to wyrownanie do dnia tygodnia.</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Data zodiakowa</div>
+            <div class="guide-desc">Format: np. "6 Piscion, Rok 0". Era A.A. (Anno Amareth) zaczyna sie od roku 1 = ingres Barana 2026. Rok 0 = okres przed era. Lata wstecz: "Rok 5 p.A." (przed Amareth).</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Godziny planetarne</div>
+            <div class="guide-desc">Kolo SVG z 24 godzinami planetarnymi (Horae Temporales). 12 dziennych + 12 nocnych, kazda rzadzona przez jedna z 7 planet w porzadku Chaldejskim. Podswietlona = aktualna godzina.</div>
+            <div class="guide-planets">
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#f0c040">&#9737;</span> Slonce</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#c0c8d8">&#9789;</span> Ksiezyc</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#d44040">&#9794;</span> Mars</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#a080d0">&#9791;</span> Merkury</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#4080d0">&#9795;</span> Jowisz</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#40b880">&#9792;</span> Wenus</span>
+                <span class="guide-planet"><span class="guide-planet-sym" style="color:#808080">&#9796;</span> Saturn</span>
+            </div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Wplyw lokalizacji</div>
+            <div class="guide-desc">Godziny planetarne zaleza od wschodu i zachodu Slonca w danym miejscu — zmiana miasta zmienia dlugosc godzin. Granice miesiecy moga sie przesunac o ±1 dzien (miesiac zaczyna sie od pierwszego wschodu po ingresie).</div>
+        </div>
+
+        <div class="guide-section">
+            <div class="guide-section-head">Strefa czasowa</div>
+            <div class="guide-desc">Czas wyswietlany na zegarze odpowiada strefie czasowej wybranego miasta. Np. po wybraniu Tokio zobaczysz czas JST, a godziny planetarne beda obliczone dla tamtejszego wschodu i zachodu Slonca.</div>
+        </div>
     </div>
 
     <div id="polar-warning" style="display:none"></div>
@@ -343,6 +529,31 @@
         // Default location: Torun (53.01, 18.60)
         let userLat = 53.01, userLng = 18.60;
         let polarState = null; // null, 'day', 'night'
+        let userTz = 'Europe/Warsaw';
+        let userTzOffsetMs = 0;
+        let locationAnimId = null;
+
+        function computeTzOffsetMs(tz) {
+            if (!tz) return 0;
+            const now = new Date();
+            function wallMs(timeZone) {
+                const p = new Intl.DateTimeFormat('en-US', {
+                    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                }).formatToParts(now);
+                const g = t => parseInt(p.find(v => v.type === t).value);
+                return Date.UTC(g('year'), g('month') - 1, g('day'),
+                    g('hour') === 24 ? 0 : g('hour'), g('minute'), g('second'));
+            }
+            return wallMs(tz) - wallMs(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        }
+
+        userTzOffsetMs = computeTzOffsetMs(userTz);
+
+        function fmtTimeLocal(d) {
+            const shifted = userTzOffsetMs ? new Date(d.getTime() + userTzOffsetMs) : d;
+            return shifted.toLocaleTimeString('pl', { hour: '2-digit', minute: '2-digit' });
+        }
 
         const todayUTC = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
         const nowLocal = new Date();
@@ -367,8 +578,8 @@
                 } else {
                     polarState = null;
                     sunInfo = `<div class="sun-times">
-                        <span>Wschod: ${fmtTime(st.sunrise)}</span>
-                        <span>Zachod: ${fmtTime(st.sunset)}</span>
+                        <span>Wschod: ${fmtTimeLocal(st.sunrise)}</span>
+                        <span>Zachod: ${fmtTimeLocal(st.sunset)}</span>
                     </div>`;
                 }
             }
@@ -528,7 +739,7 @@
 
                 // Time label on hover area (invisible rect with title)
                 const [hx, hy] = polar(R_SYM, mid);
-                s += `<circle cx="${hx}" cy="${hy}" r="12" fill="transparent"><title>${h.planet.name} ${fmtTime(h.start)}-${fmtTime(h.end)} (${Math.round(h.durationMin)} min)</title></circle>`;
+                s += `<circle cx="${hx}" cy="${hy}" r="12" fill="transparent"><title>${h.planet.name} ${fmtTimeLocal(h.start)}-${fmtTimeLocal(h.end)} (${Math.round(h.durationMin)} min)</title></circle>`;
             }
 
             // Center circle (drawn before hand so hand appears on top)
@@ -552,15 +763,15 @@
                 const remaining = Math.max(0, Math.round((h.end.getTime() - now) / 60000));
                 s += `<text x="${cx}" y="${cy - 25}" fill="${h.planet.hex}" font-size="34" text-anchor="middle" dominant-baseline="central" font-weight="bold">${h.planet.symbol}</text>`;
                 s += `<text x="${cx}" y="${cy + 3}" fill="#e6edf3" font-size="13" text-anchor="middle" dominant-baseline="central" font-weight="600">Godzina ${h.planet.name}</text>`;
-                s += `<text x="${cx}" y="${cy + 19}" fill="#8b949e" font-size="10" text-anchor="middle" dominant-baseline="central">${h.isDay ? 'Dzienna' : 'Nocna'} ${h.isDay ? h.num : h.num-12}/12 \u00b7 ${fmtTime(h.start)}\u2013${fmtTime(h.end)}</text>`;
+                s += `<text x="${cx}" y="${cy + 19}" fill="#8b949e" font-size="10" text-anchor="middle" dominant-baseline="central">${h.isDay ? 'Dzienna' : 'Nocna'} ${h.isDay ? h.num : h.num-12}/12 \u00b7 ${fmtTimeLocal(h.start)}\u2013${fmtTimeLocal(h.end)}</text>`;
                 s += `<text x="${cx}" y="${cy + 34}" fill="#8b949e" font-size="9" text-anchor="middle" dominant-baseline="central">jeszcze ${remaining} min \u00b7 ${Math.round(h.durationMin)} min/godz</text>`;
             } else {
                 s += `<text x="${cx}" y="${cy}" fill="#8b949e" font-size="11" text-anchor="middle" dominant-baseline="central">poza zakresem godzin</text>`;
             }
 
             // Sunrise/Sunset labels
-            s += `<text x="${cx}" y="${cy - R_OUT - 12}" fill="#f0c040" font-size="11" text-anchor="middle" font-weight="600">\u2600 Wschod ${fmtTime(sunrise)}</text>`;
-            s += `<text x="${cx}" y="${cy + R_OUT + 16}" fill="#6080b0" font-size="11" text-anchor="middle" font-weight="600">\u263D Zachod ${fmtTime(sunset)}</text>`;
+            s += `<text x="${cx}" y="${cy - R_OUT - 12}" fill="#f0c040" font-size="11" text-anchor="middle" font-weight="600">\u2600 Wschod ${fmtTimeLocal(sunrise)}</text>`;
+            s += `<text x="${cx}" y="${cy + R_OUT + 16}" fill="#6080b0" font-size="11" text-anchor="middle" font-weight="600">\u263D Zachod ${fmtTimeLocal(sunset)}</text>`;
 
             // Day/Night side labels
             s += `<text x="${cx + R_OUT + 12}" y="${cy}" fill="#f0c04044" font-size="9" text-anchor="middle" dominant-baseline="central" transform="rotate(90,${cx + R_OUT + 12},${cy})" letter-spacing="3">DZIEN</text>`;
@@ -606,19 +817,292 @@
             document.getElementById('year-summary').textContent = `Suma dni: ${totalDays}`;
         }
 
+        // ========== WORLD MAP DATA & FUNCTIONS ==========
+function getWorldContinents() {
+            return [
+                { id: 'africa', d: 'M337.1,166.4L326.8,155.7L324.7,150.5L327.5,145.7L327.4,139.8L325.9,138.0L328.0,132.6L333.7,124.7L340.9,120.1L341.4,114.9L346.2,111.8L348.1,108.5L355.7,109.7L362.9,106.8L372.5,105.8L382.1,105.8L380.7,112.4L398.2,119.5L400.1,118.0L400.3,115.5L403.1,114.3L417.8,118.3L422.0,116.9L423.9,118.1L428.5,117.6L429.8,121.0L428.3,124.4L424.8,120.3L425.5,122.6L431.4,132.1L431.1,133.8L433.7,136.0L435.0,142.8L438.5,148.2L446.6,155.2L445.4,156.5L449.2,159.1L462.3,156.5L457.2,169.3L440.5,185.1L438.4,189.4L437.6,193.0L441.0,201.5L441.6,209.4L438.9,213.4L429.6,219.6L430.9,228.2L425.1,231.5L424.4,237.5L416.4,245.5L411.6,247.9L405.1,247.7L400.1,249.6L396.8,248.3L396.4,243.3L390.4,234.2L388.5,224.2L383.6,216.1L383.6,211.6L387.4,201.5L383.8,190.1L377.6,182.2L378.8,172.5L377.0,170.5L371.8,171.5L368.7,167.5L356.1,170.6L350.7,169.7L344.1,171.3L337.1,166.4Z M460.4,212.0L459.7,210.8L454.2,229.9L450.8,231.2L448.1,230.0L446.5,224.1L448.7,220.1L448.9,212.4L455.4,209.2L458.4,204.1L460.4,212.0Z' },
+                { id: 'europe', d: 'M254.1,175.8L251.0,175.4L252.0,172.8L251.0,170.2L252.1,168.5L254.2,169.2L256.7,171.7L254.1,175.8Z M341.4,103.3L341.1,101.2L342.5,98.5L341.2,93.9L344.0,92.5L356.2,93.2L357.2,92.0L357.6,88.0L354.1,84.9L351.0,84.1L350.8,82.6L356.8,82.7L356.1,80.4L358.0,81.3L362.7,79.7L363.3,78.1L367.7,76.8L369.4,73.8L376.2,72.9L377.6,72.0L376.2,69.0L377.1,65.8L381.2,64.5L380.5,66.2L381.8,67.1L379.3,69.1L379.9,70.8L381.9,71.3L381.9,72.0L385.0,71.1L388.2,72.5L395.2,70.3L399.3,71.1L402.5,69.6L402.2,66.4L403.2,65.2L405.0,64.5L406.6,66.0L408.2,65.9L408.9,63.2L406.9,62.8L406.7,61.6L416.0,61.0L418.2,59.9L416.1,59.0L405.7,60.3L402.6,58.6L403.1,56.6L402.1,54.8L403.1,53.6L410.8,49.8L410.6,48.9L407.8,48.0L404.4,48.6L402.4,49.9L402.7,51.2L395.7,54.5L394.2,57.3L397.6,59.8L395.7,62.1L393.7,62.6L391.8,67.8L389.3,67.6L388.2,69.2L385.9,69.3L380.7,61.1L376.8,63.4L374.1,63.8L371.3,62.8L370.0,56.1L371.8,54.8L381.1,51.0L389.5,44.4L398.4,40.4L406.0,39.6L409.1,37.9L416.3,37.6L422.6,39.1L420.0,39.6L422.2,40.9L424.3,40.2L433.0,41.9L442.1,45.1L442.3,46.4L436.8,48.0L426.4,46.7L429.6,48.2L429.9,51.2L434.0,52.3L434.3,51.3L433.1,50.5L434.4,49.7L439.2,51.0L440.9,50.5L439.5,49.0L444.2,47.0L447.9,47.9L449.1,46.5L447.4,45.3L448.4,44.1L446.9,42.9L452.5,43.5L453.6,44.6L451.1,44.9L451.1,46.0L452.7,46.7L455.8,46.2L456.3,45.0L467.4,42.3L468.9,42.4L467.0,43.6L477.6,42.2L479.9,43.4L482.2,42.1L480.1,41.0L481.1,40.3L487.0,40.9L497.0,43.8L498.4,42.8L496.3,41.3L493.9,41.1L494.5,40.1L493.4,37.9L497.1,36.1L498.4,34.3L505.2,34.4L505.6,35.6L503.7,37.2L505.6,39.2L505.1,42.0L507.3,43.2L502.6,47.4L504.8,47.7L510.1,44.5L508.9,43.3L509.9,42.0L507.7,41.9L507.2,40.7L508.8,38.7L506.2,37.1L509.8,35.8L509.3,34.3L511.4,35.4L510.6,37.3L512.7,37.7L511.8,36.3L515.2,35.5L519.3,35.4L523.0,36.5L521.2,34.8L521.0,32.7L533.6,32.1L532.0,31.1L534.3,29.8L546.5,27.9L553.4,28.2L561.5,27.1L564.0,25.4L568.7,24.6L572.1,25.3L569.4,25.7L573.9,26.1L574.5,27.0L582.2,26.6L588.3,28.3L587.8,29.3L578.8,31.6L586.0,32.0L587.1,33.3L591.1,32.5L606.4,34.1L606.5,32.5L614.0,32.9L617.2,33.9L618.1,35.2L616.9,36.0L622.6,38.4L624.5,36.3L627.7,37.2L639.7,37.0L638.3,35.2L640.9,34.3L659.0,35.6L665.9,38.3L678.0,38.3L679.7,39.1L679.4,40.6L681.9,41.1L695.7,40.8L699.2,42.6L701.6,42.0L700.0,40.7L700.9,39.8L711.4,40.2L720.0,42.1L720.0,50.0L714.8,50.8L718.7,54.0L718.5,55.4L714.7,55.0L707.4,56.7L700.7,60.2L697.8,58.9L692.6,60.4L691.7,59.7L689.8,60.5L687.1,60.3L684.0,63.5L684.1,64.3L686.4,64.8L686.1,67.7L684.3,67.8L683.4,69.4L684.2,70.3L680.7,71.3L680.0,73.6L677.1,74.1L676.5,76.1L673.6,78.0L670.9,69.2L671.8,66.5L673.6,64.3L676.7,63.9L687.3,57.7L688.9,54.9L686.5,55.1L685.3,56.7L680.2,58.9L678.6,56.5L673.4,57.1L668.4,60.5L670.1,61.7L662.5,62.4L662.7,61.0L659.6,60.7L657.1,61.7L644.4,61.9L630.3,70.5L633.4,70.8L636.3,72.5L637.6,71.5L639.8,71.6L642.7,73.8L640.1,83.1L629.7,93.2L627.1,94.4L624.6,93.4L621.6,95.6L621.3,94.2L622.3,94.1L622.6,91.8L622.1,90.1L626.2,89.7L630.1,83.0L622.0,84.4L621.2,82.5L618.8,81.1L615.3,80.5L611.9,74.4L610.1,73.7L602.0,73.5L600.4,74.5L601.5,75.0L601.5,76.1L598.6,79.7L595.8,81.0L588.7,79.5L581.3,81.7L577.0,81.4L573.8,79.5L567.4,79.8L564.5,79.0L564.1,77.5L557.7,75.9L555.7,78.0L556.5,79.2L554.5,80.5L544.5,78.4L534.7,81.6L533.7,80.3L531.1,80.6L526.8,77.9L523.9,78.4L521.1,77.2L520.1,78.3L515.6,73.2L513.1,71.6L513.8,71.0L506.9,73.0L507.0,71.9L502.4,71.7L501.7,69.7L498.1,69.2L490.4,71.3L482.9,72.0L482.0,72.7L483.4,74.0L479.9,76.1L483.2,77.5L482.7,78.4L479.3,78.9L473.6,77.9L471.4,78.8L464.7,76.6L461.5,76.6L457.4,78.8L457.2,80.3L455.1,79.1L452.9,83.2L454.6,84.6L456.1,84.5L457.4,85.8L457.2,86.9L458.2,87.2L453.4,90.8L457.2,96.4L455.6,97.7L450.9,95.0L439.9,93.1L433.4,89.5L436.5,87.5L435.3,86.7L438.2,85.5L429.9,87.5L430.0,88.7L433.1,89.1L432.7,89.8L427.8,91.3L426.7,90.9L427.1,89.9L424.9,89.3L427.2,88.3L426.6,87.8L421.5,86.8L419.3,89.9L417.7,90.2L415.3,94.8L416.0,96.0L412.2,96.3L413.2,96.9L412.1,98.4L407.4,98.6L408.8,99.8L405.3,99.5L406.7,101.6L405.9,102.1L408.1,103.6L408.1,104.7L406.2,104.2L406.8,105.2L405.5,105.4L406.3,107.2L403.3,106.3L402.2,103.4L398.8,99.5L398.7,96.2L392.0,93.0L389.8,89.8L388.5,89.5L387.9,90.4L387.9,88.8L386.3,88.5L384.7,89.2L385.2,91.8L390.3,96.1L391.9,96.1L391.8,96.9L397.0,99.7L396.6,100.4L393.7,99.1L392.9,100.4L394.3,101.2L394.1,102.2L392.2,104.0L391.4,104.2L392.2,102.1L390.8,99.9L384.2,96.6L381.0,94.1L380.4,92.2L377.8,91.3L373.1,93.7L369.1,93.2L366.2,93.8L366.1,96.2L361.6,98.0L359.4,101.4L360.2,102.5L355.7,106.7L351.3,106.6L348.3,107.9L347.0,106.1L342.2,106.3L342.3,103.5L341.4,103.3Z M376.9,101.7L376.3,98.1L378.4,97.6L379.6,99.0L379.3,101.6L376.9,101.7Z M377.5,94.7L378.8,94.0L378.5,97.2L377.6,96.8L377.5,94.7Z M340.6,72.2L344.9,69.7L348.7,70.9L346.4,75.5L342.9,76.7L340.0,76.4L341.7,74.3L340.6,72.2Z M349.8,69.9L350.6,69.0L349.9,68.4L348.8,69.4L347.7,66.4L348.4,64.4L350.0,62.7L354.0,62.7L351.9,64.9L356.1,64.6L353.8,68.1L355.8,68.2L357.8,70.8L359.1,71.1L360.9,74.1L363.4,74.5L362.1,76.4L362.9,77.4L361.1,78.5L348.4,79.7L353.2,77.1L349.5,76.0L351.6,75.4L350.5,74.3L350.8,73.0L353.8,73.2L354.1,72.0L349.8,69.9Z M385.4,68.8L384.2,70.4L381.8,68.4L384.7,67.8L385.4,68.8Z M324.4,52.6L314.5,52.1L316.4,51.2L312.1,50.2L315.5,49.2L311.3,48.8L312.7,47.5L315.7,47.2L318.8,48.5L321.9,47.4L324.4,48.0L327.7,46.9L331.0,47.1L330.5,48.4L332.8,49.7L324.4,52.6Z M20.2,48.0L14.9,49.1L14.9,51.1L14.1,51.5L8.0,50.2L7.6,49.3L3.3,49.2L2.2,48.5L2.6,47.8L0.2,48.3L1.1,49.2L0.0,50.0L0.0,42.1L10.1,45.6L10.0,46.8L11.3,47.3L10.9,45.9L16.3,46.2L20.2,48.0Z M4.7,37.7L0.0,38.3L0.0,37.0L2.0,36.9L4.7,37.7Z M390.2,106.8L384.9,104.8L385.1,103.7L391.0,103.5L390.2,106.8Z M405.8,23.1L409.4,24.3L405.0,25.1L401.5,24.6L402.8,24.1L401.6,23.5L405.8,23.1Z M396.9,24.3L395.2,24.7L394.2,26.4L391.8,26.5L387.5,25.2L389.3,24.5L382.4,22.3L380.9,20.7L394.0,19.9L403.1,22.1L398.1,22.9L396.9,24.3Z M394.7,19.4L405.8,18.7L414.8,19.9L411.8,21.0L406.0,21.2L400.2,20.9L394.7,19.4Z M407.4,108.6L411.5,109.6L412.6,109.4L409.4,110.2L407.0,109.4L407.4,108.6Z M645.1,84.3L647.1,86.3L647.0,87.7L645.5,86.5L644.2,88.1L643.8,86.4L644.4,78.1L643.2,76.1L643.4,73.4L645.2,72.5L644.4,71.5L645.3,71.3L646.5,76.5L649.3,82.0L646.3,81.4L645.1,84.3Z M720.0,38.3L717.8,38.4L717.5,37.8L720.0,37.0L720.0,38.3Z M640.1,33.4L644.1,32.3L647.2,33.6L644.2,33.6L640.1,33.4Z M471.3,29.8L496.3,26.1L497.7,26.9L477.0,31.4L470.8,35.3L471.2,36.9L475.1,38.6L467.4,38.5L466.8,37.6L463.2,37.1L462.9,36.0L465.0,35.5L464.9,34.5L468.9,32.7L467.0,32.5L471.8,30.7L471.3,29.8Z M652.7,29.0L661.5,29.8L659.2,30.6L652.2,29.7L652.7,29.0Z M633.9,29.5L635.0,28.1L637.7,27.7L650.2,28.9L648.6,30.4L637.9,30.8L633.9,29.5Z M562.5,21.5L570.7,22.6L570.2,23.4L558.9,24.2L562.5,21.5Z M549.9,21.9L542.4,19.3L551.9,17.5L560.4,20.4L559.9,22.2L549.9,21.9Z M463.0,18.6L455.2,20.0L453.0,19.5L454.1,18.9L449.7,18.8L463.0,18.6Z' },
+                { id: 'asia', d: 'M457.4,152.0L447.0,154.7L444.5,145.1L438.3,137.4L437.0,132.6L429.3,123.9L428.5,117.6L432.0,110.7L432.3,106.7L425.0,107.8L415.3,106.7L412.3,101.1L418.5,97.6L427.0,96.0L440.7,98.0L443.4,96.1L440.2,92.9L450.9,95.0L454.7,97.6L457.2,96.4L460.8,99.5L459.1,99.6L457.7,102.4L458.4,104.8L467.7,106.1L467.8,102.1L465.4,99.9L465.8,98.2L469.5,98.1L467.4,95.8L465.6,97.7L465.0,94.4L460.6,90.8L466.1,89.5L466.1,86.3L457.2,86.9L456.1,84.5L452.9,83.2L455.1,79.1L457.2,80.3L461.5,76.6L471.4,78.8L482.7,78.4L483.2,77.5L479.9,76.1L483.4,74.0L482.0,72.7L482.9,72.0L498.1,69.2L501.7,69.7L502.4,71.7L507.0,71.9L506.9,73.0L513.8,71.0L520.1,78.3L526.8,77.9L534.7,81.6L544.5,78.4L554.5,80.5L557.7,75.9L567.4,79.8L573.8,79.5L577.0,81.4L581.3,81.7L588.7,79.5L595.8,81.0L601.5,76.1L600.4,74.5L607.1,73.1L611.9,74.4L615.3,80.5L618.8,81.1L622.0,84.4L630.1,83.0L626.2,89.7L622.1,90.1L622.3,94.1L619.4,98.2L615.1,100.5L618.9,106.4L618.2,109.8L613.0,111.2L612.2,106.5L613.7,106.2L609.4,103.8L610.6,100.9L608.5,100.1L602.1,102.2L604.3,99.2L603.3,98.1L595.1,102.5L599.4,105.7L601.6,104.3L604.7,105.1L605.0,106.1L598.3,110.2L603.8,116.6L602.5,118.6L603.9,122.0L597.3,130.9L591.8,134.4L581.6,137.2L580.9,139.3L579.8,139.4L579.7,137.2L577.0,136.6L571.8,140.5L571.3,141.9L577.8,149.4L578.4,156.7L570.3,162.8L570.2,160.2L567.0,158.7L565.2,155.6L561.7,154.7L562.0,153.2L560.2,153.2L558.4,161.5L565.9,169.0L568.5,177.4L562.8,174.5L560.2,167.1L557.0,163.2L556.7,164.4L557.5,157.1L554.3,146.1L550.7,148.6L548.4,147.9L548.6,143.6L542.8,134.5L541.0,134.4L540.5,136.3L534.0,137.0L533.0,139.7L524.4,146.9L520.6,148.2L519.7,159.3L515.1,164.1L507.1,148.0L505.3,137.3L500.9,138.2L492.7,129.1L483.0,129.8L474.8,128.5L473.0,125.7L467.0,126.4L463.0,124.3L460.2,119.7L457.9,119.4L455.9,120.0L456.8,122.9L461.6,130.5L462.0,128.0L463.2,128.4L463.6,132.0L468.0,131.8L472.7,127.2L473.7,131.5L479.6,135.4L472.6,144.2L457.4,152.0Z M426.0,110.9L425.9,109.2L429.2,108.7L426.0,110.9Z M418.0,97.4L412.7,99.7L412.2,96.3L416.0,96.0L418.0,97.4Z M593.5,198.1L595.8,196.2L598.3,197.4L593.5,198.1Z M591.4,196.7L589.1,197.5L570.7,193.7L572.1,191.8L577.2,193.6L581.5,192.9L591.4,196.7Z M571.6,191.7L569.4,191.7L565.2,188.4L550.6,169.0L555.0,169.5L567.7,179.8L566.9,181.4L572.2,186.1L571.6,191.7Z M595.0,179.8L592.3,188.0L589.7,188.2L586.5,186.2L580.4,185.9L577.9,179.2L579.3,176.0L582.3,176.3L582.7,174.6L586.0,173.8L594.3,166.1L598.4,169.2L594.6,173.5L598.0,178.2L595.0,179.8Z M520.3,160.4L523.6,165.0L523.3,167.0L520.7,168.1L519.4,163.6L520.3,160.4Z M599.4,158.9L597.0,161.4L594.3,163.3L599.0,157.3L599.4,158.9Z M582.0,140.6L579.0,143.6L577.3,143.0L578.2,140.4L582.0,140.6Z M606.9,200.5L611.9,196.9L614.7,196.8L606.9,200.5Z M599.8,197.6L602.7,197.1L605.8,196.2L605.5,197.3L599.8,197.6Z M635.2,196.8L637.3,194.6L635.9,190.8L627.3,187.1L626.0,188.2L624.0,185.6L627.4,184.4L624.5,184.4L621.0,181.9L628.0,181.6L628.8,185.5L630.9,186.7L634.9,183.4L642.0,185.2L642.1,198.2L640.3,196.6L635.2,196.8Z M615.8,186.8L618.7,185.6L621.7,187.7L620.0,186.9L615.8,186.8Z M608.9,179.1L600.4,179.5L600.1,181.0L601.9,182.8L606.7,181.2L603.0,183.8L606.3,190.7L604.5,190.6L605.4,188.9L603.0,189.1L601.9,185.3L600.6,185.9L600.9,191.1L599.6,191.3L597.5,185.6L600.1,178.9L601.8,177.4L610.5,177.2L608.9,179.1Z M617.4,177.7L616.8,181.6L615.4,180.5L614.8,178.0L615.9,175.7L617.4,177.7Z M611.4,167.9L608.4,167.7L607.2,164.3L603.8,165.6L607.0,162.6L610.9,162.0L610.8,160.5L612.4,161.4L613.1,165.6L612.4,167.5L611.7,165.4L610.7,166.4L611.4,167.9Z M608.2,157.5L606.0,162.0L604.8,160.6L608.2,157.5Z M605.3,158.5L603.8,156.2L606.2,156.8L605.3,158.5Z M609.6,159.7L608.6,157.0L609.8,156.4L608.5,154.9L611.0,155.7L611.6,157.9L610.0,157.4L609.6,159.7Z M600.6,153.1L603.1,153.9L602.5,155.6L601.7,154.6L600.6,153.1Z M603.5,151.3L607.9,152.4L608.2,154.9L605.9,152.9L601.3,152.3L602.0,150.9L600.1,150.1L599.8,147.3L600.6,147.9L601.4,143.0L604.7,143.6L603.5,151.3Z M603.0,129.4L602.4,134.4L601.5,136.1L600.2,132.9L603.0,129.4Z M628.4,113.6L626.0,114.6L624.7,114.0L625.8,111.9L629.3,111.7L628.4,113.6Z M638.0,110.7L634.4,110.8L631.6,113.1L630.2,110.8L622.0,112.2L624.0,113.7L621.4,117.9L618.8,113.4L625.2,109.1L631.4,108.9L633.4,105.4L634.8,106.3L638.9,103.6L639.8,98.9L642.7,97.2L643.8,101.6L641.9,103.7L641.5,108.3L638.0,110.7Z M639.9,96.9L639.6,94.9L642.8,93.2L643.9,88.9L647.8,91.7L650.6,91.2L651.1,93.5L646.4,96.0L643.2,94.6L642.1,96.8L639.9,96.9Z' },
+                { id: 'north_america', d: 'M50.4,141.0L48.1,141.9L48.3,139.5L50.4,141.0Z M165.7,124.3L164.3,135.1L165.6,138.7L171.1,143.7L178.5,141.4L179.4,138.0L185.9,136.9L182.1,148.2L190.0,148.0L193.2,149.5L193.2,159.2L197.1,162.4L200.9,160.8L203.9,161.5L205.1,164.7L204.2,165.6L201.8,162.0L198.2,165.6L188.7,160.1L188.6,157.8L185.0,153.4L177.5,152.1L170.6,147.6L166.9,148.7L153.0,143.4L149.0,140.1L147.9,134.5L135.5,122.1L133.7,117.7L130.4,116.4L130.7,119.7L141.1,133.6L139.9,134.4L135.6,130.5L135.4,128.0L129.9,124.6L131.7,122.9L129.0,120.9L125.4,113.9L118.8,110.8L111.2,99.4L112.2,89.0L110.6,83.6L113.8,83.9L114.8,85.8L114.3,82.0L108.8,79.2L105.1,78.3L104.3,75.3L101.7,74.5L91.8,63.8L65.8,58.2L63.6,58.7L64.0,60.0L56.6,61.7L58.8,57.4L52.0,61.3L53.4,62.3L51.5,63.7L43.1,68.0L30.4,71.2L44.6,64.9L45.9,62.2L36.1,62.7L35.0,60.0L29.3,59.0L27.8,57.0L28.5,55.9L30.9,53.7L38.5,52.5L37.0,51.2L38.4,50.4L30.1,51.1L23.8,48.7L31.1,46.8L36.6,47.8L26.5,43.3L36.2,39.3L46.8,37.3L87.0,42.2L101.8,40.4L103.7,39.0L108.5,41.0L111.2,39.7L111.4,41.2L117.1,40.4L132.2,43.2L129.4,44.2L140.1,44.0L142.2,45.2L144.4,44.2L142.4,43.4L143.7,42.7L157.1,44.7L163.1,44.4L162.9,43.2L164.7,42.8L167.8,43.5L167.7,45.4L171.5,41.9L167.1,39.8L167.2,37.6L172.2,36.5L177.0,39.6L175.2,40.6L178.9,41.0L178.9,43.1L181.6,41.5L185.3,45.6L188.8,42.4L189.0,40.2L194.8,40.7L197.6,42.7L196.1,43.7L197.2,45.8L188.5,46.9L185.4,50.4L178.6,52.8L171.5,58.2L170.6,62.1L173.6,62.4L175.4,65.8L195.5,69.7L195.7,73.4L200.2,77.6L202.8,74.9L200.3,70.7L206.9,66.9L203.0,62.4L205.3,60.3L203.8,55.4L212.3,55.1L220.8,57.9L221.4,62.1L224.7,63.6L230.8,59.3L237.2,66.1L236.4,67.3L248.5,73.5L248.6,75.7L239.9,79.5L227.2,79.5L217.8,86.4L229.9,81.5L231.7,82.5L229.8,83.9L231.1,87.5L233.7,88.5L237.0,88.2L239.0,86.0L240.4,88.2L229.3,92.9L227.8,92.8L227.7,91.1L231.1,89.4L225.7,89.7L218.7,93.8L220.1,96.7L212.6,98.1L216.1,98.1L212.1,98.5L210.2,102.1L208.9,101.0L209.9,103.2L208.1,105.6L207.3,101.7L207.3,103.8L206.0,103.5L208.5,108.9L197.3,117.1L199.9,126.2L199.2,129.6L196.6,128.3L192.6,120.1L183.2,119.2L180.8,119.7L181.2,121.7L170.6,121.0L165.7,124.3Z M103.9,80.0L103.3,78.5L108.5,79.4L113.0,83.0L103.9,80.0Z M97.6,75.6L93.9,73.2L93.6,71.7L96.5,71.8L95.9,74.0L97.6,75.6Z M50.7,65.1L53.5,64.1L55.7,64.8L52.0,66.5L50.7,65.1Z M22.6,53.4L16.9,53.4L16.5,52.4L22.6,53.4Z M157.8,40.8L154.5,41.0L155.1,42.5L148.1,41.6L133.4,42.9L125.3,40.1L135.2,39.3L124.2,38.9L123.1,38.2L127.8,37.4L121.2,36.9L129.6,33.4L131.7,33.8L130.7,34.7L140.2,34.1L143.6,36.7L144.6,35.9L143.2,33.8L145.0,33.5L149.2,34.7L151.1,38.0L157.8,40.8Z M121.6,35.0L119.1,37.2L113.8,38.2L108.1,36.3L112.1,32.6L110.2,31.4L124.9,31.6L129.0,33.0L121.6,35.0Z M146.8,32.8L149.5,32.7L151.0,33.2L149.2,34.5L146.8,32.8Z M148.6,29.0L132.3,30.6L136.4,29.7L124.6,29.6L129.2,27.0L141.9,29.1L139.0,27.1L140.8,26.4L148.6,29.0Z M127.3,26.2L120.2,27.9L114.3,27.8L121.8,25.0L127.6,24.7L127.3,26.2Z M160.7,24.2L149.6,23.2L151.6,22.6L149.0,21.4L158.3,22.4L160.7,24.2Z M137.0,22.3L140.7,22.8L134.9,23.2L137.0,22.3Z M192.5,55.6L193.5,54.2L196.2,54.2L193.9,55.7L192.5,55.6Z M199.8,52.5L193.8,51.8L189.0,53.9L185.6,52.9L188.2,48.5L199.8,52.5Z M160.4,41.2L163.6,39.7L168.7,41.8L160.4,41.2Z M163.9,34.0L166.9,34.9L166.6,36.7L161.4,37.3L155.0,35.0L159.1,34.6L156.9,33.3L159.3,32.3L165.8,33.1L163.9,34.0Z M169.2,35.9L167.9,34.1L169.0,32.3L179.0,32.3L169.2,35.9Z M172.0,29.4L171.7,30.8L166.4,30.1L170.3,28.7L172.0,29.4Z M180.5,31.0L165.8,26.5L176.8,26.4L181.6,28.8L197.7,28.6L200.3,30.2L180.5,31.0Z M158.2,29.9L158.3,28.7L155.0,28.9L154.9,27.3L164.5,27.5L163.7,30.0L158.2,29.9Z M172.3,25.0L167.7,24.9L167.1,24.3L171.2,24.4L172.3,25.0Z M162.7,22.3L166.5,22.5L168.9,23.2L165.4,24.3L162.7,22.3Z M170.5,17.6L188.4,21.3L181.9,23.4L174.2,23.3L172.1,22.5L173.7,21.2L166.6,19.7L170.5,17.6Z M213.6,140.2L223.4,142.8L218.7,143.1L217.2,144.8L211.1,143.3L215.3,142.7L213.6,140.2Z M204.0,135.4L211.4,139.9L204.5,140.3L205.8,139.2L202.6,136.8L196.4,134.7L190.1,136.2L195.5,133.6L204.0,135.4Z M203.2,130.8L204.2,129.7L204.9,132.5L204.4,132.6L203.2,130.8Z M231.7,87.2L232.0,85.9L236.0,87.1L234.3,88.1L231.7,87.2Z M246.4,80.4L253.0,81.5L252.4,83.0L253.8,82.6L254.7,84.9L253.9,86.7L251.6,86.4L251.5,84.5L249.2,86.2L247.5,84.7L241.2,84.2L248.3,76.7L246.4,80.4Z M209.8,44.0L208.3,45.7L205.5,44.8L206.4,43.7L209.8,44.0Z M204.4,34.5L222.4,38.9L226.1,41.6L222.4,42.6L236.3,46.3L232.2,50.0L226.6,47.2L224.0,47.5L223.7,48.6L229.4,51.2L230.0,54.7L222.4,52.5L227.7,56.1L218.0,54.2L210.3,50.6L204.6,51.5L202.9,50.9L204.2,49.4L212.1,49.1L214.1,44.5L202.1,39.7L182.6,39.2L181.0,38.5L183.1,37.6L180.2,37.6L179.6,35.5L183.2,32.9L188.3,32.4L186.9,33.7L188.5,34.9L195.4,32.5L198.8,34.6L198.5,35.9L204.4,34.5Z M318.3,14.5L296.2,15.6L315.9,16.5L313.7,17.7L328.5,16.2L335.6,17.4L319.9,19.6L324.5,19.7L320.6,22.5L320.7,24.7L323.1,26.0L316.6,26.7L320.3,27.8L320.8,29.5L318.7,29.7L321.3,31.4L312.9,33.4L315.4,35.6L310.4,35.3L315.7,37.1L316.5,38.7L312.9,39.1L308.9,37.1L309.6,38.5L307.3,39.5L315.3,39.7L280.4,49.1L277.6,53.0L274.4,54.6L275.2,56.2L273.2,59.8L263.5,58.3L256.7,52.7L252.1,45.6L258.3,40.1L250.6,40.8L251.3,38.4L257.2,38.9L248.3,36.7L250.6,34.8L242.8,29.0L223.0,27.9L217.2,26.0L226.5,25.2L213.4,23.9L228.6,21.2L229.4,20.5L224.0,19.8L239.4,15.9L259.2,15.1L271.0,16.7L266.5,14.7L289.8,12.7L318.3,14.5Z M207.5,34.3L201.0,34.5L198.3,32.6L203.9,32.7L207.5,34.3Z M176.8,16.2L197.8,14.0L214.3,13.5L236.3,14.7L224.7,17.0L229.0,17.0L217.6,20.4L206.2,21.4L208.9,21.6L207.6,22.0L209.2,22.9L200.5,25.6L204.2,26.4L198.9,27.6L181.0,27.1L184.5,25.6L183.5,24.2L190.0,24.9L184.1,23.3L189.8,21.3L186.1,19.5L196.3,19.1L184.8,19.0L176.8,16.2Z' },
+                { id: 'south_america', d: 'M222.7,291.2L215.5,289.0L210.7,285.7L217.8,288.1L219.5,285.9L222.7,285.3L224.5,287.7L229.9,289.4L222.7,291.2Z M223.7,284.7L218.3,285.8L217.1,287.7L210.1,284.5L208.8,277.3L211.7,273.9L208.7,273.3L211.3,268.2L213.5,268.9L214.6,264.8L213.2,264.2L212.6,266.7L211.3,266.4L213.6,258.5L212.8,254.3L217.1,244.8L219.8,222.8L219.3,216.7L208.0,209.3L200.5,194.4L197.5,192.3L197.2,189.5L200.5,185.3L198.1,184.5L199.8,178.5L205.7,172.3L204.2,165.6L205.1,163.0L208.7,161.1L210.2,157.8L216.5,155.1L217.7,155.8L216.1,157.2L216.6,161.9L217.9,160.3L217.2,158.1L220.1,155.7L223.6,158.9L230.2,159.8L236.2,158.6L234.5,159.2L235.2,160.1L245.7,168.1L252.1,168.5L251.0,175.4L254.1,175.8L257.4,171.6L260.1,176.5L259.2,180.2L262.8,180.5L262.8,182.5L264.4,181.2L270.2,183.1L270.8,185.4L280.0,185.7L288.8,190.3L290.5,194.7L289.7,198.0L282.7,206.1L281.5,215.7L278.1,223.9L276.0,225.9L264.7,229.8L262.2,237.3L252.4,248.8L247.6,249.7L243.1,247.8L246.4,253.8L241.5,257.4L235.3,257.7L235.7,261.4L234.5,262.1L229.8,262.1L230.0,264.1L233.1,265.1L229.6,267.0L228.9,270.1L225.4,271.1L224.8,272.6L228.7,274.5L221.7,281.5L223.7,284.7Z M244.5,283.1L241.2,284.4L237.6,283.7L242.9,282.2L244.5,283.1Z' },
+                { id: 'oceania', d: 'M655.8,266.4L652.1,267.1L649.5,261.4L656.6,261.8L655.8,266.4Z M607.3,247.8L599.8,248.0L596.0,250.1L590.1,248.4L591.6,244.4L586.7,232.2L587.6,233.1L586.9,231.2L588.5,232.6L586.8,228.8L587.5,225.0L593.4,221.4L601.7,219.4L606.0,212.8L607.7,214.1L607.0,213.2L611.4,208.5L614.1,207.6L619.2,209.9L621.2,205.1L625.2,204.2L623.6,202.5L624.7,202.3L630.6,204.5L633.0,203.7L633.9,204.7L631.0,210.0L640.4,215.4L642.5,212.8L645.0,201.3L647.8,209.1L649.1,208.3L650.7,210.0L652.8,217.9L657.7,220.8L659.4,224.7L661.5,224.8L666.3,232.1L667.1,236.2L665.8,243.3L660.0,254.9L652.6,258.1L650.1,255.8L647.2,257.6L641.3,256.0L639.1,252.3L636.2,251.2L636.4,248.8L633.7,250.5L635.6,245.8L632.0,249.8L628.5,245.2L619.1,243.2L608.4,245.9L607.3,247.8Z M679.4,198.5L680.7,198.8L681.7,199.7L679.7,199.6L679.4,198.5Z M642.0,185.2L655.3,192.2L654.4,194.8L661.4,201.2L655.8,200.3L649.5,195.3L645.3,198.7L642.1,198.2L642.0,185.2Z M671.2,193.8L669.5,191.8L669.3,190.1L672.0,193.1L671.2,193.8Z M656.6,191.5L660.3,190.0L661.6,190.9L663.1,188.3L664.7,188.6L664.0,191.0L660.5,192.6L656.6,191.5Z M665.7,189.5L662.8,186.1L661.3,185.5L664.5,186.5L666.0,188.0L665.7,189.5Z M694.1,270.2L705.6,261.0L708.5,262.7L705.4,266.7L706.2,267.7L702.9,268.5L698.7,273.3L693.4,272.4L694.1,270.2Z M710.1,262.9L709.8,259.8L707.6,259.0L709.4,254.8L705.3,249.1L708.7,250.5L711.9,255.1L717.0,255.4L712.0,262.6L710.1,262.9Z M694.2,224.3L688.3,220.9L688.1,220.2L694.2,224.3Z M714.8,216.3L715.3,214.8L717.4,215.3L717.1,216.3L714.8,216.3Z' },
+                { id: 'antarctica', d: 'M227.4,340.5L240.9,340.1L239.7,342.0L227.4,340.5Z M269.7,336.1L273.3,340.1L251.7,341.3L262.7,336.1L269.7,336.1Z M0.0,349.4L73.8,350.1L52.8,347.4L54.3,344.1L46.3,342.2L67.2,340.7L49.3,338.1L43.3,333.8L57.3,334.8L70.2,330.4L120.6,329.0L132.1,327.4L159.8,329.7L152.6,325.2L207.6,327.9L222.1,326.0L225.7,324.1L222.9,319.4L225.5,313.8L234.0,309.3L244.4,306.5L228.7,315.9L236.4,321.4L238.3,327.4L218.8,333.3L205.5,333.4L212.7,335.8L204.0,338.4L243.6,346.4L302.9,340.7L288.7,338.9L288.4,336.7L325.0,330.3L329.1,326.3L346.3,321.9L414.2,320.9L427.7,317.0L437.3,319.6L469.1,311.6L482.9,315.9L497.8,315.9L499.3,318.5L495.9,323.7L499.7,324.5L507.7,319.7L536.0,312.4L551.6,314.8L565.7,311.1L572.4,313.9L587.2,311.8L599.7,314.5L630.1,310.6L634.9,313.9L651.0,313.8L702.4,323.4L687.1,332.5L694.0,337.5L683.5,338.3L679.6,341.9L698.8,347.7L720.0,349.4L720.0,360.0L0.0,360.0L0.0,349.4Z M210.1,324.1L219.5,317.8L223.3,322.8L210.1,324.1Z' },
+                { id: 'japan', d: 'M625.8,111.9L627.0,112.1L627.8,111.3L629.3,111.7L629.5,112.4L628.4,113.6L627.6,113.0L626.6,113.4L626.0,114.6L624.7,114.0L624.7,113.1L625.8,111.9Z M642.0,105.7L641.2,107.3L641.5,108.3L640.5,109.7L638.0,110.7L634.4,110.8L631.6,113.1L630.2,112.3L630.2,110.8L622.0,112.2L624.0,113.7L622.7,117.1L621.4,117.9L620.4,117.2L620.9,115.4L619.6,114.8L618.8,113.4L620.7,112.8L625.2,109.1L629.2,108.5L631.4,108.9L633.4,105.4L634.8,106.3L638.9,103.6L640.1,101.1L639.8,98.9L640.6,97.6L642.7,97.2L643.8,100.0L643.8,101.6L641.9,103.7L642.0,105.7Z M651.1,93.5L648.1,94.0L646.4,96.0L643.2,94.6L642.1,96.8L639.9,96.9L639.6,94.9L640.6,93.3L642.8,93.2L643.9,88.9L647.8,91.7L649.2,92.1L650.6,91.2L651.1,93.5Z' },
+                { id: 'uk', d: 'M353.8,73.2L354.1,72.0L352.7,70.8L349.8,69.9L350.6,69.0L349.9,68.4L348.8,69.4L348.7,67.4L347.7,66.4L348.4,64.4L350.0,62.7L354.0,62.7L351.9,64.9L356.1,64.6L355.6,66.3L353.8,68.1L355.8,68.2L357.8,70.8L359.1,71.1L360.9,74.1L363.4,74.5L363.1,75.8L362.1,76.4L362.9,77.4L361.1,78.5L355.0,79.0L354.1,78.6L352.8,79.5L350.9,79.3L349.5,80.1L348.4,79.7L351.4,77.6L353.2,77.1L350.0,76.8L349.5,76.0L351.6,75.4L350.5,74.3L350.8,73.0L353.8,73.2Z M347.6,72.3L344.9,71.9L345.3,70.8L344.9,69.7L346.5,69.7L348.7,70.9L347.6,72.3Z' },
+                { id: 'new_zealand', d: 'M701.0,266.1L703.9,263.0L704.2,261.9L705.6,261.0L706.5,262.7L707.9,261.9L708.5,262.7L708.5,263.5L705.4,266.7L706.2,267.7L702.9,268.5L701.2,271.8L698.7,273.3L693.4,272.4L693.0,271.7L694.1,270.2L696.6,268.2L701.0,266.1Z M713.0,261.2L710.5,263.4L709.3,262.6L710.5,260.9L709.8,259.8L707.6,259.0L707.7,258.3L709.1,257.6L709.4,254.8L705.3,249.1L706.0,248.9L708.7,250.5L710.7,254.4L710.7,253.1L711.6,253.6L711.9,255.1L714.9,255.9L716.0,255.2L717.0,255.4L715.9,258.3L714.4,258.3L713.0,261.2Z' },
+                { id: 'indonesia', d: 'M599.8,198.7L601.4,200.5L597.9,199.1L599.8,198.7Z M598.3,197.4L593.5,198.1L594.2,196.9L595.3,196.9L595.8,196.2L597.8,196.6L598.3,197.4Z M605.5,197.3L599.8,197.6L599.8,196.9L601.4,196.5L604.0,196.9L605.8,196.2L605.5,197.3Z M581.5,192.9L585.2,193.9L586.0,195.2L589.0,195.6L591.4,196.7L589.1,197.5L586.9,196.7L576.6,195.5L572.9,194.7L572.6,193.8L570.7,193.7L572.1,191.8L574.5,191.9L577.0,192.8L577.2,193.6L581.1,193.8L581.5,192.9Z M608.9,179.1L600.4,179.5L600.1,181.0L601.9,182.8L603.0,181.9L606.7,181.2L606.5,182.2L605.6,181.9L604.8,183.0L603.0,183.8L604.9,186.4L604.5,187.1L606.3,189.4L606.3,190.7L605.3,191.3L604.5,190.6L605.4,188.9L603.5,189.7L603.0,189.1L603.2,188.4L601.8,187.2L601.9,185.3L600.6,185.9L600.9,191.1L599.6,191.3L598.7,190.8L599.3,188.9L599.0,187.0L598.2,187.0L597.5,185.6L600.1,178.9L601.8,177.4L608.2,178.2L610.1,176.7L610.5,177.2L608.9,179.1Z M572.2,186.1L571.6,191.7L569.4,191.7L565.2,188.4L562.8,185.6L560.3,181.3L558.5,179.6L557.2,176.4L550.8,170.1L550.6,169.0L555.0,169.5L561.3,175.8L563.3,175.8L567.7,179.8L566.9,181.4L568.7,182.2L569.8,184.7L571.2,184.9L572.2,186.1Z M595.8,176.3L598.0,178.2L595.6,178.4L595.0,179.8L595.0,181.6L593.1,183.0L592.3,188.0L592.0,187.3L589.7,188.2L588.9,187.0L586.5,186.2L584.1,187.0L583.4,186.0L580.4,185.9L580.1,183.2L578.2,180.9L578.1,177.3L579.3,176.0L579.7,177.3L581.0,178.5L583.6,178.2L585.7,177.0L587.6,177.6L589.2,177.1L591.7,171.4L595.8,171.7L594.6,173.5L596.1,175.4L595.8,176.3Z M607.2,200.7L608.0,198.6L609.9,197.8L610.2,198.8L608.9,200.3L607.2,200.7Z M629.0,190.9L629.4,192.4L628.4,193.8L628.2,192.3L629.0,190.9Z M638.3,196.2L637.8,196.8L635.2,196.8L636.1,195.2L637.3,194.6L635.9,190.8L630.3,188.9L627.3,187.1L626.0,188.2L625.5,186.6L624.0,185.6L627.6,185.0L627.4,184.4L624.5,184.4L623.7,183.2L621.9,182.9L621.0,181.9L624.8,180.7L628.0,181.6L628.8,185.5L630.9,186.7L632.6,184.6L634.9,183.4L636.7,183.4L642.0,185.2L642.1,198.2L640.3,196.6L638.3,196.2Z M614.5,186.9L613.7,187.6L612.4,187.2L612.0,186.4L614.0,186.3L614.5,186.9Z M618.3,186.7L615.8,186.8L616.3,185.7L618.7,185.6L620.9,186.2L621.7,187.7L618.3,186.7Z M617.3,179.5L616.2,179.3L615.9,180.5L616.8,181.6L616.2,181.8L614.8,178.0L615.9,175.7L616.0,176.7L617.2,176.9L617.3,179.5Z' },
+                { id: 'philippines', d: 'M613.1,165.6L612.4,167.5L611.7,165.4L610.7,166.4L611.4,167.9L610.8,168.8L608.4,167.7L607.9,166.2L608.5,165.3L607.2,164.3L604.2,166.2L603.8,165.6L604.6,163.9L607.0,162.6L607.7,163.5L609.2,163.0L609.5,162.1L610.9,162.0L610.8,160.5L612.4,161.4L613.1,165.6Z M594.3,163.3L598.0,159.2L599.0,157.3L599.4,158.9L594.3,163.3Z M607.0,158.1L606.7,159.5L608.2,157.5L608.0,159.4L606.0,162.0L604.8,160.6L605.9,158.2L607.0,158.1Z M606.2,156.8L606.2,157.7L604.0,159.1L603.8,156.2L606.2,156.8Z M610.0,157.4L610.6,159.3L609.6,159.7L609.5,158.3L608.9,158.2L608.6,157.0L609.8,157.2L609.8,156.4L608.5,154.9L610.5,154.9L611.0,155.7L611.6,157.9L610.0,157.4Z M603.1,153.9L602.5,155.6L600.6,153.1L602.4,153.1L603.1,153.9Z M604.5,147.5L603.3,148.1L603.5,151.3L605.4,151.3L607.9,152.4L608.2,154.9L605.9,152.9L605.3,153.6L604.1,152.4L601.3,152.3L602.0,150.9L601.4,150.5L601.1,151.2L600.1,150.1L599.8,147.3L600.6,147.9L601.4,143.0L603.9,143.6L604.5,143.0L605.0,145.8L604.5,147.5Z' },
+                { id: 'madagascar', d: 'M458.4,204.1L460.1,207.1L460.8,211.4L460.4,212.0L459.7,210.8L459.3,211.4L459.5,213.8L454.2,229.9L450.8,231.2L448.1,230.0L446.7,225.6L446.9,222.7L447.8,222.3L448.9,218.9L447.9,214.8L448.9,212.4L452.6,211.6L455.4,209.2L456.0,208.2L455.7,207.3L456.6,207.6L458.4,204.1Z' },
+                { id: 'iceland', d: 'M331.0,47.1L330.5,48.4L332.8,49.7L330.2,51.3L322.7,53.0L314.5,52.1L316.4,51.2L312.1,50.2L315.6,49.8L315.5,49.2L311.3,48.8L312.7,47.5L315.7,47.2L318.8,48.5L321.9,47.4L324.4,48.0L327.7,46.9L331.0,47.1Z' },
+                { id: 'sri_lanka', d: 'M523.6,165.0L523.3,167.0L520.7,168.1L519.7,166.5L519.4,163.6L520.3,160.4L521.7,161.5L523.6,165.0Z' },
+                { id: 'cuba', d: 'M195.5,133.6L198.8,133.8L201.4,135.2L203.3,135.0L207.0,137.6L208.8,138.0L208.7,138.5L211.6,139.4L210.1,140.2L204.5,140.3L205.8,139.2L203.7,138.5L202.6,136.8L195.7,135.2L196.4,134.7L194.4,134.6L191.9,136.2L190.1,136.2L192.4,134.4L195.5,133.6Z' },
+                { id: 'greenland', d: 'M266.5,14.7L273.2,13.5L280.2,13.6L282.8,12.9L305.8,13.0L318.3,14.5L314.6,15.3L296.2,15.6L310.3,16.4L314.2,15.8L315.9,16.5L313.7,17.7L328.5,16.2L334.5,16.6L335.6,17.4L326.3,19.3L319.9,19.6L324.5,19.7L320.6,22.5L320.7,24.7L323.1,26.0L316.6,26.7L320.3,27.8L320.8,29.5L318.7,29.7L321.3,31.4L316.8,31.6L319.1,32.4L318.5,33.1L312.9,33.4L315.4,34.7L315.4,35.6L311.4,34.8L310.4,35.3L315.7,37.1L316.5,38.7L312.9,39.1L308.9,37.1L309.6,38.5L307.3,39.5L315.3,39.7L304.5,43.1L296.4,43.8L291.6,46.6L287.3,48.0L280.4,49.1L278.7,50.3L278.6,51.7L277.6,53.0L274.4,54.6L275.2,56.2L273.2,59.8L270.4,59.9L267.5,58.3L263.5,58.3L256.7,52.7L255.7,51.4L255.4,49.6L252.7,47.8L253.4,46.3L252.1,45.6L254.0,43.3L257.0,42.5L258.3,40.1L253.1,41.4L250.6,40.8L250.5,39.4L251.3,38.4L257.2,38.9L252.0,36.9L248.3,36.7L250.6,34.8L245.4,30.6L242.8,29.8L242.8,29.0L237.5,27.8L223.0,27.9L217.2,26.0L226.5,25.2L213.4,23.9L213.7,23.1L228.6,21.2L229.4,20.5L224.0,19.8L225.7,19.0L235.5,17.4L234.7,16.5L245.6,15.6L251.7,15.6L253.9,16.2L259.2,15.1L271.0,16.7L266.2,15.6L266.5,14.7Z' },
+            ];
+        }
+
+        const MAP_CITIES = [
+            { name: 'Warszawa', lat: 52.23, lng: 21.01, tz: 'Europe/Warsaw', label: true },
+            { name: 'Krakow', lat: 50.06, lng: 19.94, tz: 'Europe/Warsaw' },
+            { name: 'Wroclaw', lat: 51.11, lng: 17.04, tz: 'Europe/Warsaw' },
+            { name: 'Gdansk', lat: 54.35, lng: 18.65, tz: 'Europe/Warsaw' },
+            { name: 'Torun', lat: 53.01, lng: 18.60, tz: 'Europe/Warsaw' },
+            { name: 'Londyn', lat: 51.51, lng: -0.13, tz: 'Europe/London', label: true },
+            { name: 'Paryz', lat: 48.86, lng: 2.35, tz: 'Europe/Paris' },
+            { name: 'Berlin', lat: 52.52, lng: 13.41, tz: 'Europe/Berlin' },
+            { name: 'Rzym', lat: 41.90, lng: 12.50, tz: 'Europe/Rome' },
+            { name: 'Madryt', lat: 40.42, lng: -3.70, tz: 'Europe/Madrid' },
+            { name: 'Sztokholm', lat: 59.33, lng: 18.07, tz: 'Europe/Stockholm' },
+            { name: 'Kopenhaga', lat: 55.68, lng: 12.57, tz: 'Europe/Copenhagen' },
+            { name: 'Helsinki', lat: 60.17, lng: 24.94, tz: 'Europe/Helsinki' },
+            { name: 'Lizbona', lat: 38.72, lng: -9.14, tz: 'Europe/Lisbon' },
+            { name: 'Ateny', lat: 37.98, lng: 23.73, tz: 'Europe/Athens' },
+            { name: 'Kijow', lat: 50.45, lng: 30.52, tz: 'Europe/Kyiv' },
+            { name: 'Moskwa', lat: 55.76, lng: 37.62, tz: 'Europe/Moscow', label: true },
+            { name: 'Stambu\u0142', lat: 41.01, lng: 28.98, tz: 'Europe/Istanbul' },
+            { name: 'Nowy Jork', lat: 40.71, lng: -74.01, tz: 'America/New_York', label: true },
+            { name: 'Los Angeles', lat: 34.05, lng: -118.24, tz: 'America/Los_Angeles', label: true },
+            { name: 'Chicago', lat: 41.88, lng: -87.63, tz: 'America/Chicago' },
+            { name: 'Toronto', lat: 43.65, lng: -79.38, tz: 'America/Toronto' },
+            { name: 'Meksyk', lat: 19.43, lng: -99.13, tz: 'America/Mexico_City', label: true },
+            { name: 'Sao Paulo', lat: -23.55, lng: -46.63, tz: 'America/Sao_Paulo', label: true },
+            { name: 'Buenos Aires', lat: -34.60, lng: -58.38, tz: 'America/Argentina/Buenos_Aires' },
+            { name: 'Lima', lat: -12.05, lng: -77.04, tz: 'America/Lima' },
+            { name: 'Bogota', lat: 4.71, lng: -74.07, tz: 'America/Bogota' },
+            { name: 'Tokio', lat: 35.68, lng: 139.69, tz: 'Asia/Tokyo', label: true },
+            { name: 'Seul', lat: 37.57, lng: 126.98, tz: 'Asia/Seoul' },
+            { name: 'Pekin', lat: 39.90, lng: 116.40, tz: 'Asia/Shanghai', label: true },
+            { name: 'Szanghaj', lat: 31.23, lng: 121.47, tz: 'Asia/Shanghai' },
+            { name: 'Hongkong', lat: 22.32, lng: 114.17, tz: 'Asia/Hong_Kong' },
+            { name: 'Singapur', lat: 1.35, lng: 103.82, tz: 'Asia/Singapore' },
+            { name: 'Bangkok', lat: 13.76, lng: 100.50, tz: 'Asia/Bangkok' },
+            { name: 'Delhi', lat: 28.61, lng: 77.21, tz: 'Asia/Kolkata', label: true },
+            { name: 'Mumbaj', lat: 19.08, lng: 72.88, tz: 'Asia/Kolkata' },
+            { name: 'Dubaj', lat: 25.20, lng: 55.27, tz: 'Asia/Dubai', label: true },
+            { name: 'Jerozolima', lat: 31.77, lng: 35.23, tz: 'Asia/Jerusalem' },
+            { name: 'Kair', lat: 30.04, lng: 31.24, tz: 'Africa/Cairo', label: true },
+            { name: 'Kapsztad', lat: -33.93, lng: 18.42, tz: 'Africa/Johannesburg' },
+            { name: 'Nairobi', lat: -1.29, lng: 36.82, tz: 'Africa/Nairobi' },
+            { name: 'Lagos', lat: 6.52, lng: 3.38, tz: 'Africa/Lagos' },
+            { name: 'Sydney', lat: -33.87, lng: 151.21, tz: 'Australia/Sydney', label: true },
+            { name: 'Auckland', lat: -36.85, lng: 174.76, tz: 'Pacific/Auckland' },
+            { name: 'Longyearbyen', lat: 78.22, lng: 15.64, tz: 'Arctic/Longyearbyen' },
+            { name: 'Reykjavik', lat: 64.14, lng: -21.90, tz: 'Atlantic/Reykjavik' },
+            { name: 'Tromso', lat: 69.65, lng: 18.96, tz: 'Europe/Oslo' },
+        ];
+
+        function latLngToMapXY(lat, lng) {
+            return [(lng + 180) * 2, (90 - lat) * 2];
+        }
+        function mapXYToLatLng(x, y) {
+            return [90 - y / 2, x / 2 - 180];
+        }
+
+        function initWorldMap() {
+            const container = document.getElementById('world-map-container');
+            if (!container) return;
+
+            let svg = '<svg id="world-map" viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg">';
+            svg += '<defs>';
+            svg += '<radialGradient id="markerGlow"><stop offset="0%" stop-color="#c8a84e" stop-opacity="0.6"/><stop offset="100%" stop-color="#c8a84e" stop-opacity="0"/></radialGradient>';
+            svg += '<filter id="markerBlur"><feGaussianBlur stdDeviation="1.5"/></filter>';
+            svg += '</defs>';
+            svg += '<rect width="720" height="360" fill="#080818"/>';
+            svg += '<g class="map-grid">';
+            for (let lng = -150; lng <= 180; lng += 30) {
+                const x = (lng + 180) * 2;
+                svg += `<line x1="${x}" y1="0" x2="${x}" y2="360" ${lng === 0 ? 'class="equator"' : ''}/>`;
+            }
+            for (let lat = -60; lat <= 60; lat += 30) {
+                const y = (90 - lat) * 2;
+                svg += `<line x1="0" y1="${y}" x2="720" y2="${y}" ${lat === 0 ? 'class="equator"' : ''}/>`;
+            }
+            svg += '</g>';
+            svg += '<g class="continents">';
+            for (const c of getWorldContinents()) {
+                svg += `<path id="cont-${c.id}" d="${c.d}"/>`;
+            }
+            svg += '</g>';
+            svg += '<g class="map-cities">';
+            for (const city of MAP_CITIES) {
+                const [cx, cy] = latLngToMapXY(city.lat, city.lng);
+                svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="1.5" data-name="${city.name}" data-lat="${city.lat}" data-lng="${city.lng}" data-tz="${city.tz}"/>`;
+                if (city.label) {
+                    svg += `<text x="${(cx + 4).toFixed(1)}" y="${(cy + 2).toFixed(1)}">${city.name}</text>`;
+                }
+            }
+            svg += '</g>';
+            const [mx, my] = latLngToMapXY(userLat, userLng);
+            svg += `<g id="map-marker" class="map-marker">`;
+            svg += `<circle cx="${mx}" cy="${my}" r="12" class="pulse"/>`;
+            svg += `<circle cx="${mx}" cy="${my}" r="4" fill="#c8a84e" filter="url(#markerBlur)"/>`;
+            svg += `<circle cx="${mx}" cy="${my}" r="1.5" fill="#fff"/>`;
+            svg += '</g>';
+            svg += '<g id="map-tooltip" class="map-tooltip" style="display:none">';
+            svg += '<rect x="0" y="0" width="80" height="16"/>';
+            svg += '<text x="4" y="11"></text>';
+            svg += '</g>';
+            svg += '</svg>';
+
+            container.innerHTML = svg;
+            setupMapInteraction();
+        }
+
+        function updateMapMarker(lat, lng) {
+            const marker = document.getElementById('map-marker');
+            if (!marker) return;
+            const [mx, my] = latLngToMapXY(lat, lng);
+            const circles = marker.querySelectorAll('circle');
+            circles.forEach(c => {
+                c.setAttribute('cx', mx.toFixed(1));
+                c.setAttribute('cy', my.toFixed(1));
+            });
+        }
+
+        function setupMapInteraction() {
+            const svgEl = document.getElementById('world-map');
+            if (!svgEl) return;
+            const isTouch = 'ontouchstart' in window;
+
+            function handleMapClick(e) {
+                const rect = svgEl.getBoundingClientRect();
+                const scaleX = 720 / rect.width;
+                const scaleY = 360 / rect.height;
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                const x = (clientX - rect.left) * scaleX;
+                const y = (clientY - rect.top) * scaleY;
+                const [lat, lng] = mapXYToLatLng(x, y);
+
+                let nearest = null, minDist = Infinity;
+                for (const city of MAP_CITIES) {
+                    const dlat = city.lat - lat;
+                    const dlng = city.lng - lng;
+                    const dist = Math.sqrt(dlat * dlat + dlng * dlng);
+                    if (dist < minDist) { minDist = dist; nearest = city; }
+                }
+
+                if (nearest && minDist < 2) {
+                    const sel = document.getElementById('city-select');
+                    sel.value = `${nearest.lat},${nearest.lng}`;
+                    setLocation(nearest.lat, nearest.lng, nearest.name, nearest.tz);
+                } else {
+                    let tzCity = null, tzMinDist = Infinity;
+                    for (const city of MAP_CITIES) {
+                        const dist = Math.sqrt((city.lat - lat) ** 2 + (city.lng - lng) ** 2);
+                        if (dist < tzMinDist) { tzMinDist = dist; tzCity = city; }
+                    }
+                    const tz = tzCity && tzMinDist < 15 ? tzCity.tz : null;
+                    document.getElementById('city-select').value = '';
+                    setLocation(
+                        Math.round(lat * 100) / 100,
+                        Math.round(lng * 100) / 100,
+                        `${lat.toFixed(1)}\u00b0, ${lng.toFixed(1)}\u00b0`,
+                        tz
+                    );
+                }
+            }
+
+            svgEl.addEventListener('click', handleMapClick);
+            if (isTouch) {
+                svgEl.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    handleMapClick(e);
+                }, { passive: false });
+            }
+
+            if (!isTouch) {
+                svgEl.addEventListener('mousemove', function(e) {
+                    const tooltip = document.getElementById('map-tooltip');
+                    if (!tooltip) return;
+                    const rect = svgEl.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) * (720 / rect.width);
+                    const y = (e.clientY - rect.top) * (360 / rect.height);
+                    const [lat, lng] = mapXYToLatLng(x, y);
+                    tooltip.style.display = '';
+                    const tx = Math.min(x + 8, 640);
+                    const ty = Math.max(y - 20, 2);
+                    tooltip.querySelector('rect').setAttribute('x', tx);
+                    tooltip.querySelector('rect').setAttribute('y', ty);
+                    tooltip.querySelector('text').setAttribute('x', tx + 4);
+                    tooltip.querySelector('text').setAttribute('y', ty + 11);
+                    tooltip.querySelector('text').textContent = `${lat.toFixed(1)}\u00b0  ${lng.toFixed(1)}\u00b0`;
+                });
+                svgEl.addEventListener('mouseleave', function() {
+                    const tooltip = document.getElementById('map-tooltip');
+                    if (tooltip) tooltip.style.display = 'none';
+                });
+            }
+        }
+
         // ========== LOCATION HANDLING ==========
 
-        function setLocation(lat, lng, label) {
-            userLat = lat;
-            userLng = lng;
+        function setLocation(lat, lng, label, tz) {
+            const fromLat = userLat;
+            const fromLng = userLng;
+            const fromTzOffset = userTzOffsetMs;
+            const toTzOffset = tz ? computeTzOffsetMs(tz) : 0;
+
+            let dLng = lng - fromLng;
+            if (dLng > 180) dLng -= 360;
+            if (dLng < -180) dLng += 360;
+
             document.getElementById('loc-status').textContent = `${label} (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
-            document.getElementById('lat-input').value = lat.toFixed(2);
-            document.getElementById('lng-input').value = lng.toFixed(2);
-            // Recalculate current zodiac year with location
-            currentYear = gregorianToZodiac(todayUTC, userLat, userLng).year;
-            renderToday();
-            renderYear(currentYear);
-            updateThemeLinks();
+            if (locationAnimId) { cancelAnimationFrame(locationAnimId); locationAnimId = null; }
+
+            if (fromLat === lat && fromLng === lng && fromTzOffset === toTzOffset) {
+                userTz = tz;
+                userTzOffsetMs = toTzOffset;
+                currentYear = gregorianToZodiac(todayUTC, userLat, userLng).year;
+                updateMapMarker(userLat, userLng);
+                renderToday();
+                renderYear(currentYear);
+                updateThemeLinks();
+                return;
+            }
+
+            const DURATION = 5000;
+            const startTime = performance.now();
+
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / DURATION, 1);
+                const e = easeInOutCubic(progress);
+
+                userLat = fromLat + (lat - fromLat) * e;
+                let animLng = fromLng + dLng * e;
+                if (animLng > 180) animLng -= 360;
+                if (animLng < -180) animLng += 360;
+                userLng = animLng;
+                userTzOffsetMs = fromTzOffset + (toTzOffset - fromTzOffset) * e;
+
+                updateMapMarker(userLat, userLng);
+                renderToday();
+
+                if (progress < 1) {
+                    locationAnimId = requestAnimationFrame(animate);
+                } else {
+                    locationAnimId = null;
+                    userLat = lat;
+                    userLng = lng;
+                    userTz = tz;
+                    userTzOffsetMs = toTzOffset;
+                    currentYear = gregorianToZodiac(todayUTC, userLat, userLng).year;
+                    renderYear(currentYear);
+                    updateThemeLinks();
+                }
+            }
+
+            locationAnimId = requestAnimationFrame(animate);
         }
 
         window.requestGeolocation = function() {
@@ -628,7 +1112,7 @@
             }
             document.getElementById('loc-status').textContent = 'Pobieram lokalizacje...';
             navigator.geolocation.getCurrentPosition(
-                (pos) => setLocation(pos.coords.latitude, pos.coords.longitude, 'Twoja lokalizacja'),
+                (pos) => setLocation(pos.coords.latitude, pos.coords.longitude, 'Twoja lokalizacja', null),
                 (err) => { document.getElementById('loc-status').textContent = 'Nie udalo sie pobrac lokalizacji: ' + err.message; }
             );
         };
@@ -637,18 +1121,24 @@
             if (!val) return;
             const [lat, lng] = val.split(',').map(Number);
             const sel = document.getElementById('city-select');
-            const label = sel.options[sel.selectedIndex].text;
-            setLocation(lat, lng, label);
+            const opt = sel.options[sel.selectedIndex];
+            const label = opt.text;
+            const tz = opt.dataset.tz || null;
+            setLocation(lat, lng, label, tz);
         };
 
-        window.setManualLocation = function() {
-            const lat = parseFloat(document.getElementById('lat-input').value);
-            const lng = parseFloat(document.getElementById('lng-input').value);
-            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                document.getElementById('loc-status').textContent = 'Nieprawidlowe wspolrzedne';
-                return;
-            }
-            setLocation(lat, lng, 'Reczna lokalizacja');
+        window.toggleConfig = function() {
+            const bar = document.getElementById('location-bar');
+            const guide = document.getElementById('guide-panel');
+            if (guide) guide.style.display = 'none';
+            bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.toggleGuide = function() {
+            const panel = document.getElementById('guide-panel');
+            const bar = document.getElementById('location-bar');
+            if (bar) bar.style.display = 'none';
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         };
 
         window.changeYear = function(delta) { currentYear += delta; renderYear(currentYear); };
@@ -685,9 +1175,8 @@
         }
 
         document.getElementById('loc-status').textContent = `Torun (${userLat.toFixed(2)}, ${userLng.toFixed(2)})`;
-        document.getElementById('lat-input').value = userLat.toFixed(2);
-        document.getElementById('lng-input').value = userLng.toFixed(2);
         document.getElementById('city-select').value = '53.01,18.60';
+        initWorldMap();
         renderToday();
         renderYear(currentYear);
         document.getElementById('converter-input').value = todayUTC.toISOString().slice(0, 10);
